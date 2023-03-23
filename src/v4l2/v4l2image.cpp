@@ -24,10 +24,10 @@ void print_line_byte_hex(char *st, int x1, int x2, int y, int pitch)
 	printf("\n");
 }
 
-void print_line_dec(char *st, int x1, int x2, int y, int pitch)
+void print_line_dec(char *st, int x1, int x2, int y, int pitch, int shift)
 {
 	for (int x=x1; x<=x2; x=x+2) {
-		short val16 = *(short *)&st[y*pitch + x];
+		short val16 = (*(short *)&st[y*pitch + x]) >> shift;
 		printf("%04u ", val16);
 	}
 	printf("\n");
@@ -64,7 +64,7 @@ void print_bayer_pattern(char *st, int x, int y, int pitch)
 	printf("             %4d %4d\n",     val3, val4);
 }
 
-void V4L2Image::print(u_int32_t format, int16_t x, int16_t y, u_int8_t count)
+void V4L2Image::print(u_int32_t format, int16_t x, int16_t y, u_int8_t count, int16_t shift)
 {
         if (m_lastTimestamp == 0) {
 		m_lastTimestamp = m_timestamp;   
@@ -85,9 +85,14 @@ void V4L2Image::print(u_int32_t format, int16_t x, int16_t y, u_int8_t count)
 
         switch(format) {
         case 1:  print_line_bit((char *)m_planes[0], x, x + 4, y, m_bytesPerLine); break;
-	case 10: print_line_dec((char *)m_planes[0], x, x + count-2, y, m_bytesPerLine); break;
-        case 16: print_line_byte_hex((char *)m_planes[0], x, x + count-2, y, m_bytesPerLine);
+	case 10: print_line_dec((char *)m_planes[0], x, x + count-2, y, m_bytesPerLine, shift); break;
+        case 16: print_line_byte_hex((char *)m_planes[0], x, x + count-2, y, m_bytesPerLine); break;
         }
 
         m_lastTimestamp = m_timestamp;
+}
+
+int V4L2Image::histo(u_int16_t &min, u_int16_t &max, u_int16_t &mean)
+{
+	return 0;
 }

@@ -27,13 +27,14 @@ public:
         int setGain(int gain);
         int setExposure(int exposure);
         int setBlackLevel(int blackLevel);
+        int setBinning(int binning);
         int setTriggerMode(int triggerMode);
         int setIOMode(int ioMode);
         int setFrameRate(int frameRate);
 
 protected:
         int m_deviceFd;
-        // int mSubDeviceFD;
+        int m_subDeviceFd;
         
         int setControl(unsigned int id, int value);
         int setExtControl(unsigned int id, unsigned int type, int value);

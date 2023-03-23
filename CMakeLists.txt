@@ -10,15 +10,25 @@ target_include_directories(errno PUBLIC include/errno)
 add_library(v4l2
         STATIC
         src/v4l2/v4l2image.cpp
-        src/v4l2/v4l2imagesource.cpp)
+        src/v4l2/v4l2imagesource.cpp
+        src/v4l2/v4l2imagesocket.cpp)
 target_include_directories(v4l2 PUBLIC include/v4l2)
-target_link_libraries(v4l2 PUBLIC errno)
+target_link_libraries(v4l2 PRIVATE errno)
+
+add_library(utils
+        STATIC
+        src/utils/commandargs.cpp
+        src/utils/framebuffer.cpp)
+target_include_directories(utils PUBLIC include/utils)
+target_link_libraries(utils PRIVATE errno v4l2)
 
 add_executable(v4l2-test 
-        src/v4l2-test/v4l2-test.cpp
-        src/v4l2-test/commandargs.cpp
-        src/v4l2-test/framebuffer.cpp)
-target_link_libraries(v4l2-test PRIVATE v4l2)
+        src/v4l2-test/v4l2-test.cpp)
+target_link_libraries(v4l2-test PRIVATE utils v4l2)
+
+add_executable(v4l2-server
+        src/v4l2-server/v4l2-server.cpp)
+target_link_libraries(v4l2-server PRIVATE utils v4l2)
 
 find_package(OpenMP)
 if (OPENMP_FOUND)

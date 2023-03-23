@@ -117,15 +117,13 @@ void FrameBuffer::print(V4L2Image &image, u_int8_t shift)
         case V4L2_PIX_FMT_SGBRG10:
         case V4L2_PIX_FMT_SGRBG10:
         case V4L2_PIX_FMT_SBGGR10:
-                // shift Nano: 2, XavierNX: 7, TX2: 6
-                print16(image, shift); 
-                break;
         case V4L2_PIX_FMT_Y12:
         case V4L2_PIX_FMT_SRGGB12:
         case V4L2_PIX_FMT_SGBRG12:
         case V4L2_PIX_FMT_SGRBG12:
         case V4L2_PIX_FMT_SBGGR12:
-                // shift Nano: 4, XavierNX: 8, TX2: 6
+                // RAW10 shift Nano: 2, XavierNX: 7, TX2: 6
+                // RAW12 shift Nano: 4, XavierNX: 8, TX2: 6
                 print16(image, shift); 
                 break;
         }

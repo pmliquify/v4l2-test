@@ -6,7 +6,7 @@
 class CommandArgs
 {
 public:
-        CommandArgs(int argc, char *argv[]);
+        CommandArgs(int argc, const char *argv[]);
 
         bool exists(const std::string& option);
         std::string option(const std::string &option, const std::string def = "");
@@ -14,5 +14,5 @@ public:
         
 private:
         int m_argc;
-        char **m_argv;
+        const char **m_argv;
 };

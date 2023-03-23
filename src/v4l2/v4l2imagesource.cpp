@@ -10,7 +10,7 @@
 
 V4L2ImageSource::V4L2ImageSource() :
         m_deviceFd(0),
-        // mSubDeviceFD(0),
+        m_subDeviceFd(0),
         m_buffers(NULL),
         m_bufferCount(0),
         m_nextBufferIndex(0)
@@ -40,12 +40,13 @@ int V4L2ImageSource::open(const std::string devicePath)
                 return -1;
         }
 
-        // const char *SubdevicePath = "/dev/v4l-subdev1";
-        // mSubDeviceFD = open(SubdevicePath, O_RDWR, 0);
-        // if (-1 == m_deviceFd) {
-        //         HandleErrorForOpen(SubdevicePath, errno);
-        //         return -1;
-        // }
+        // const char *subdevicePath = "/dev/v4l-subdev0";
+        const char *subdevicePath = devicePath.c_str();
+        m_subDeviceFd = ::open(subdevicePath, O_RDWR, 0);
+        if (-1 == m_deviceFd) {
+                handleErrorForOpen(subdevicePath, errno);
+                return -1;
+        }
         return 0;
 }
 
@@ -56,11 +57,11 @@ int V4L2ImageSource::close()
         if (m_deviceFd != 0 && -1 == ::close(m_deviceFd)) {
                 handleErrorForClose(m_deviceFd, errno);
         }
-        // if (-1 == close(mSubDeviceFD)) {
-        //         HandleErrorForClose(mSubDeviceFD, errno);
-        // }
+        if (-1 == ::close(m_subDeviceFd)) {
+                handleErrorForClose(m_subDeviceFd, errno);
+        }
         m_deviceFd = 0;
-        // mSubDeviceFD = 0;
+        m_subDeviceFd = 0;
         return 0;
 }
 
@@ -234,13 +235,15 @@ int V4L2ImageSource::getNextImage(V4L2Image &image, int timeout, bool lastImage)
         image.m_bufferIndex = m_nextBufferIndex;
         image.m_sequence = buffer->sequence;
         image.m_timestamp = buffer->timestamp.tv_sec*1e3 + buffer->timestamp.tv_usec/1e3;
+        image.m_bytesUsed = buffer->bytesused;
 
         switch (m_format.type) {
         case V4L2_BUF_TYPE_VIDEO_CAPTURE:
                 image.m_width = m_format.fmt.pix.width;
                 image.m_height = m_format.fmt.pix.height;
                 image.m_bytesPerLine = m_format.fmt.pix.bytesperline;
-                image.m_pixelformat = m_format.fmt.pix.pixelformat; 
+                image.m_imageSize = m_format.fmt.pix.sizeimage;
+                image.m_pixelformat = m_format.fmt.pix.pixelformat;
                 image.m_planes.resize(1);
                 image.m_planes[0] = m_buffers[m_nextBufferIndex].ptrs[0];
                 break;
@@ -250,6 +253,7 @@ int V4L2ImageSource::getNextImage(V4L2Image &image, int timeout, bool lastImage)
                 image.m_height = m_format.fmt.pix_mp.height;
                 image.m_bytesPerLine = m_format.fmt.pix_mp.plane_fmt->bytesperline;
                 image.m_pixelformat = m_format.fmt.pix_mp.pixelformat;
+                image.m_imageSize = m_format.fmt.pix_mp.plane_fmt->sizeimage;
                 image.m_planes.resize(buffer->length);
                 for (unsigned int planeIndex = 0; planeIndex < buffer->length; planeIndex++) {
                         image.m_planes[planeIndex] = m_buffers[m_nextBufferIndex].ptrs[planeIndex];
@@ -297,6 +301,11 @@ int V4L2ImageSource::setBlackLevel(int blackLevel)
         return setControl("Black Level", blackLevel);
 }
 
+int V4L2ImageSource::setBinning(int binning)
+{
+        return setControl("Binning", binning);
+}
+
 int V4L2ImageSource::setTriggerMode(int triggerMode)
 {
         return setControl("Trigger Mode", triggerMode);
@@ -338,7 +347,7 @@ int V4L2ImageSource::setExtControl(unsigned int id, unsigned int type, int value
         ext_controls.ctrl_class = type;
         ext_controls.count      = 1;
         ext_controls.controls   = &ext_control;
-        if (-1 == ioctl(m_deviceFd, VIDIOC_S_EXT_CTRLS, &ext_controls)) {
+        if (-1 == ioctl(m_subDeviceFd, VIDIOC_S_EXT_CTRLS, &ext_controls)) {
                 handleErrorForIoctl(VIDIOC_S_EXT_CTRLS, errno);
                 return -1;
         }
@@ -349,7 +358,7 @@ int V4L2ImageSource::setControl(std::string name, int value)
 {
         struct v4l2_queryctrl  queryctrl;
         queryctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
-        while(0 == ioctl(m_deviceFd, VIDIOC_QUERYCTRL, &queryctrl)) {
+        while(0 == ioctl(m_subDeviceFd, VIDIOC_QUERYCTRL, &queryctrl)) {
                 if (0 == name.compare((const char *)queryctrl.name)) {
                         printf("Control (name: '%s', id: 0x%08x, type: %u, flags: 0x%08x, value: %u)\n", 
                                 name.c_str(), queryctrl.id, queryctrl.type, queryctrl.flags, value);

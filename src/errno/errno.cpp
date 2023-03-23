@@ -17,6 +17,7 @@ const char * genericErrors(int err)
         case EPERM:     return "Permission denied. Can be returned if the device needs write permission, or some special capabilities is needed (e. g. root)";
         case EIO:       return "I/O error. Typically used when there are problems communicating with a hardware device. This could indicate broken or flaky hardware. It’s a ‘Something is wrong, I give up!’ type of error.";
         case ENXIO:     return "No device corresponding to this device special file exists.";
+        case EMSGSIZE:  return "Message too long";
         default:        return "Unknown error code";
         }
 }
