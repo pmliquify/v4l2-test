@@ -1,6 +1,7 @@
 #include <commandargs.hpp>
 #include <v4l2imagesource.hpp>
 #include <v4l2imagesocket.hpp>
+#include <v4l2autoexposure.hpp>
 #include <framebuffer.hpp>
 #include <unistd.h>
 
@@ -9,6 +10,13 @@ void printHelp()
         printf("  Usage: v4l2-test [OPTION...]\n");
         printf("\n");
         // printf("  --address, \n");
+        printf("  --aeD      \n");
+        printf("  --aeP      \n");
+        printf("  --aeMin    \n");
+        printf("  --aeMax    \n");
+        printf("  --aeSub    Set auto exposure sub sampling\n");
+        printf("  --aeTarget \n");
+        printf("  --aeTest   \n");
         printf("  -bi,       Set binning (0: 1x1, 1, 1x2, 2: 2x2)\n");
         printf("  -bl,       Set black level\n");
         printf("  -d,        Set device /dev/video0\n");
@@ -17,7 +25,6 @@ void printHelp()
         printf("  --fb,      Output the image to the framebuffer\n");
         printf("  -g,        Set gain value\n");
         printf("  -h,        Set image height\n");
-        printf("  --hist,    Print histogram of the image\n");
         printf("  --help,    Show this help\n");
         printf("  -i,        Start single image acquisition\n");
         printf("  -l,        Set delay in us in image acquisition loop\n");
@@ -27,12 +34,12 @@ void printHelp()
         printf("  --port,    \n");
         printf("  -r,        Set frame rate\n");
         printf("  -s,        Start image streaming\n");
+        printf("  --shift,   Set bit shift for each pixel in RAW10, RAW12 format\n");
         printf("  -t,        Set trigger mode\n");
         printf("  --udp,     \n");
         printf("  -w,        Set image width\n");
         printf("  -x,        Set x pixel position to print\n");
         printf("  -y,        Set y pixel position to print\n");
-        printf("  --shift,   Set bit shift for each pixel in RAW10, RAW12 format\n");
 }
 
 int processImage(CommandArgs &args, V4L2ImageSource &imageSource, V4L2Image &image, 
@@ -46,7 +53,7 @@ int processImage(CommandArgs &args, V4L2ImageSource &imageSource, V4L2Image &ima
                 imageSource.setSelection((x==-1)?0:x, (y==-1)?0:y, width, height);
         }
 
-        int delay           = args.optionInt("-l",  0);
+        // int delay           = args.optionInt("-l",  0);
         int print           = args.optionInt("-p", 16);
         int shift           = args.optionInt("--shift", 0);
         // std::string address = args.option("--address", "127.0.0.1");
@@ -102,6 +109,15 @@ int main(int argc, const char *argv[])
         int imageCount      = args.optionInt("-n", -1);
         
         V4L2Image image;
+        image.m_shift       = args.optionInt("--shift", 0);
+        V4L2AutoExposure autoExposure(&imageSource);
+        autoExposure.m_aed  = args.optionInt("--aeD", 0);
+        autoExposure.m_aep  = args.optionInt("--aeP", 1);
+        autoExposure.m_sub  = args.optionInt("--aeSub", 1);
+        autoExposure.m_test = args.optionInt("--aeTest", 0);
+        autoExposure.m_aeTarget = args.optionInt("--aeTarget", 100);
+        autoExposure.m_exposureMin = args.optionInt("--aeMin", 0);
+        autoExposure.m_exposureMax = args.optionInt("--aeMax", 10000);
         // V4L2ImageSocket socket;
         FrameBuffer frameBuffer;
         bool fb              = args.exists("--fb");
@@ -128,7 +144,8 @@ int main(int argc, const char *argv[])
                         if (-1 == imageCount) {
                                 while(true) {
                                         if (0 == imageSource.getNextImage(image, 1000000)) {
-                                                processImage(args, imageSource, image, frameBuffer, fb);
+                                                // processImage(args, imageSource, image, frameBuffer, fb);
+                                                autoExposure.exec(image);
                                                 imageSource.releaseImage(image);
                                         }
                                 }

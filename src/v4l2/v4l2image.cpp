@@ -92,7 +92,30 @@ void V4L2Image::print(u_int32_t format, int16_t x, int16_t y, u_int8_t count, in
         m_lastTimestamp = m_timestamp;
 }
 
-int V4L2Image::histo(u_int16_t &min, u_int16_t &max, u_int16_t &mean)
+int V4L2Image::stats(u_int16_t &min, u_int16_t &max, u_int16_t &mean, u_int8_t sub)
 {
+	char *st = (char *)m_planes[0];
+	int pitch = m_bytesPerLine;
+	int pixelwidth = 2;
+	u_int64_t sum = 0;
+	min = -1;
+	max = 0;
+	mean = 0;
+
+	for (u_int16_t y = 0; y < m_height; y+=sub) {
+		for (u_int16_t x = 0; x < m_width; x+=sub) {
+			char *pixel = &st[y*pitch + x*pixelwidth];
+			u_int16_t val16 = (*(u_int16_t*)pixel);
+			val16 = val16 >> m_shift;
+			if (val16 < min) {
+				min = val16;
+			}
+			if (val16 > max) {
+				max = val16;
+			}
+			sum += val16;
+		}
+	}
+	mean = sum / (m_width/sub * m_height/sub);
 	return 0;
 }

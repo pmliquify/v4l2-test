@@ -11,7 +11,8 @@ add_library(v4l2
         STATIC
         src/v4l2/v4l2image.cpp
         src/v4l2/v4l2imagesource.cpp
-        src/v4l2/v4l2imagesocket.cpp)
+        src/v4l2/v4l2imagesocket.cpp
+        src/v4l2/v4l2autoexposure.cpp)
 target_include_directories(v4l2 PUBLIC include/v4l2)
 target_link_libraries(v4l2 PRIVATE errno)
 

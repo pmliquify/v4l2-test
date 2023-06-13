@@ -3,12 +3,13 @@ TARGET      = target
 GCC         = aarch64-linux-gnu-g++
 BIN         = v4l2-test
 CFLAGS      = -ggdb -Wall -O3 -fopenmp -o $(BUILD)/$(BIN)
-TARGET_USER = root
-TARGET_IP   = 192.168.1.109
+# CFLAGS      = -ggdb -Wall -fopenmp -o $(BUILD)/$(BIN)
+TARGET_USER = peter
+TARGET_IP   = 192.168.178.58
 # SSHPASS     = sshpass -p "twqo43iP"
 SSHPASS     =
 TEST        = /home/$(TARGET_USER)/test
-ARGS        = -s
+ARGS        = -s --shift 4
 RM          = rm -rf
 INCLUDES    = -I include/errno \
 	      -I include/utils \
@@ -16,6 +17,7 @@ INCLUDES    = -I include/errno \
 SOURCES     = src/errno/errno.cpp \
 	      src/v4l2/v4l2image.cpp \
 	      src/v4l2/v4l2imagesource.cpp \
+	      src/v4l2/v4l2autoexposure.cpp \
               src/utils/commandargs.cpp \
 	      src/utils/framebuffer.cpp \
 	      src/v4l2-test/v4l2-test.cpp

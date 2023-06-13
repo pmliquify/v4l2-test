@@ -360,8 +360,8 @@ int V4L2ImageSource::setControl(std::string name, int value)
         queryctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
         while(0 == ioctl(m_subDeviceFd, VIDIOC_QUERYCTRL, &queryctrl)) {
                 if (0 == name.compare((const char *)queryctrl.name)) {
-                        printf("Control (name: '%s', id: 0x%08x, type: %u, flags: 0x%08x, value: %u)\n", 
-                                name.c_str(), queryctrl.id, queryctrl.type, queryctrl.flags, value);
+                        // printf("Control (name: '%s', id: 0x%08x, type: %u, flags: 0x%08x, value: %u)\n", 
+                        //         name.c_str(), queryctrl.id, queryctrl.type, queryctrl.flags, value);
                         return setExtControl(queryctrl.id, queryctrl.type, value);
                 }
                 queryctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
