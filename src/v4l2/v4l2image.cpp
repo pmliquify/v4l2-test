@@ -95,16 +95,22 @@ void V4L2Image::print(u_int32_t format, int16_t x, int16_t y, u_int8_t count, in
 int V4L2Image::stats(u_int16_t &min, u_int16_t &max, u_int16_t &mean, u_int8_t sub)
 {
 	char *st = (char *)m_planes[0];
-	int pitch = m_bytesPerLine;
-	int pixelwidth = 2;
+	u_int32_t pitch = m_bytesPerLine;
+	u_int32_t pixelwidth = m_bytesPerLine/m_width;
+	u_int32_t xMax = m_width*pixelwidth;
+	u_int32_t xStep = sub*pixelwidth;
+	u_int32_t yMax = m_height*pitch;
+	u_int32_t yStep = sub*pitch;
 	u_int64_t sum = 0;
 	min = -1;
 	max = 0;
 	mean = 0;
+	
 
-	for (u_int16_t y = 0; y < m_height; y+=sub) {
-		for (u_int16_t x = 0; x < m_width; x+=sub) {
-			char *pixel = &st[y*pitch + x*pixelwidth];
+	for (u_int32_t y = 0; y < yMax; y += yStep) {
+		for (u_int32_t x = 0; x < xMax; x += xStep) {
+			u_int32_t index = y + x;
+			char *pixel = st + index;
 			u_int16_t val16 = (*(u_int16_t*)pixel);
 			val16 = val16 >> m_shift;
 			if (val16 < min) {

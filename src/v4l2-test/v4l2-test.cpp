@@ -106,7 +106,7 @@ int main(int argc, const char *argv[])
                 }
         }
 
-        int imageCount      = args.optionInt("-n", -1);
+        // int imageCount      = args.optionInt("-n", -1);
         
         V4L2Image image;
         image.m_shift       = args.optionInt("--shift", 0);
@@ -119,29 +119,29 @@ int main(int argc, const char *argv[])
         autoExposure.m_exposureMin = args.optionInt("--aeMin", 0);
         autoExposure.m_exposureMax = args.optionInt("--aeMax", 10000);
         // V4L2ImageSocket socket;
-        FrameBuffer frameBuffer;
-        bool fb              = args.exists("--fb");
+        // FrameBuffer frameBuffer;
+        // bool fb              = args.exists("--fb");
 
-        if (args.exists("-i")) {
-                if (fb) {
-                        frameBuffer.open();
-                        frameBuffer.fill();
-                }
+        // if (args.exists("-i")) {
+        //         if (fb) {
+        //                 frameBuffer.open();
+        //                 frameBuffer.fill();
+        //         }
 
-                for (int index = 0; index < imageCount; index++) {
-                        imageSource.getImage(image, 1000000);
-                        processImage(args, imageSource, image, frameBuffer, fb);
-                }
-        }
+        //         for (int index = 0; index < imageCount; index++) {
+        //                 imageSource.getImage(image, 1000000);
+        //                 processImage(args, imageSource, image, frameBuffer, fb);
+        //         }
+        // }
         if (args.exists("-s")) {
-                if (fb) {
-                        frameBuffer.open();
-                        frameBuffer.fill();
-                }
+                // if (fb) {
+                //         frameBuffer.open();
+                //         frameBuffer.fill();
+                // }
                 // socket.open(address, port);
 
                 if (0 == imageSource.streamOn(3)) {
-                        if (-1 == imageCount) {
+                        // if (-1 == imageCount) {
                                 while(true) {
                                         if (0 == imageSource.getNextImage(image, 1000000)) {
                                                 // processImage(args, imageSource, image, frameBuffer, fb);
@@ -149,20 +149,20 @@ int main(int argc, const char *argv[])
                                                 imageSource.releaseImage(image);
                                         }
                                 }
-                        } else {
-                                for (int index = 0; index < imageCount; index++) {
-                                        if (0 == imageSource.getNextImage(image, 1000000)) {
-                                                processImage(args, imageSource, image, frameBuffer, fb);
-                                                imageSource.releaseImage(image);
-                                        }
-                                }
-                        }
-                        imageSource.streamOff();
+                        // } else {
+                        //         for (int index = 0; index < imageCount; index++) {
+                        //                 if (0 == imageSource.getNextImage(image, 1000000)) {
+                        //                         processImage(args, imageSource, image, frameBuffer, fb);
+                        //                         imageSource.releaseImage(image);
+                        //                 }
+                        //         }
+                        // }
+                        // imageSource.streamOff();
                 }
         }
 
         // socket.close();
-        if (fb) frameBuffer.close();
+        // if (fb) frameBuffer.close();
         imageSource.close();
 
         return 0;

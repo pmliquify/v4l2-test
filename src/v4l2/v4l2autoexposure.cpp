@@ -44,10 +44,15 @@ int V4L2AutoExposure::exec(V4L2Image &image)
 
 int V4L2AutoExposure::calculateExposure(V4L2Image &image)
 {
+        u_int16_t rep = 1;
         clock_t startTime = clock();
 
         u_int16_t min, max, mean;
-        image.stats(min, max, mean, m_sub);
+        for (int i=0; i<rep; i++) {
+                image.stats(min, max, mean, m_sub);
+        }
+        clock_t elapsedTime = clock() - startTime;
+        elapsedTime /= rep;
 
         if (m_meanLast == 0) {
                 m_meanLast = mean;
@@ -56,8 +61,6 @@ int V4L2AutoExposure::calculateExposure(V4L2Image &image)
         int32_t exposureD = ((int16_t)mean - m_meanLast)*m_aed;
         m_exposure += exposureP + exposureD;
         m_imageSource->setExposure(m_exposure);
-
-        clock_t elapsedTime = clock() - startTime;
 
         printf("Stats (min: %4u, max: %4u; mean: %4u) => AE (p: %d/%d, d: %d/%d, exp: %u, elapsed: %ld us)\n",
                 min, max, mean, m_aep, exposureP, m_aed, exposureD, m_exposure, elapsedTime);
