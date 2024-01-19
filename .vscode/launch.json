@@ -28,7 +28,7 @@
                                 }
                         ],
                         "miDebuggerPath": "/usr/bin/gdb-multiarch",
-                        "miDebuggerServerAddress": "192.168.178.58:2000"
+                        "miDebuggerServerAddress": "192.168.178.92:2000"
                 },
                 {
                         "name": "Launch Server",
@@ -53,8 +53,8 @@
                                         "ignoreFailures": true
                                 }
                         ],
-                        // "miDebuggerPath": "/usr/bin/gdb-multiarch",
-                        // "miDebuggerServerAddress": "192.168.2.19:2000"
+                        "miDebuggerPath": "/usr/bin/gdb-multiarch",
+                        "miDebuggerServerAddress": "192.168.178.92:2000"
                 }
         ]
 }

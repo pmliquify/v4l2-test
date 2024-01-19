@@ -36,7 +36,7 @@ int V4L2AutoExposure::exec(V4L2Image &image)
         }
 
         if (m_test) {
-                return testLetency(image);
+                return testLatency(image);
         } 
 
         return calculateExposure(image);
@@ -70,7 +70,7 @@ int V4L2AutoExposure::calculateExposure(V4L2Image &image)
         return 0;
 }
 
-int V4L2AutoExposure::testLetency(V4L2Image &image)
+int V4L2AutoExposure::testLatency(V4L2Image &image)
 {
         u_int16_t min, max, mean;
         image.stats(min, max, mean, m_sub);
@@ -84,7 +84,7 @@ int V4L2AutoExposure::testLetency(V4L2Image &image)
                 m_meanMax = mean;
                 m_imageSource->setExposure(m_exposureMax);
                 m_testState = TestStateInitMax;
-                printf("Init AE letency test ");
+                printf("Init AE latency test ");
                 fflush(stdout);
                 break;
 
@@ -132,9 +132,9 @@ int V4L2AutoExposure::testLetency(V4L2Image &image)
                 printf("v");
                 fflush(stdout);
                 if (abs(mean - m_meanMin) < 0.1*m_meanMin+1) {
-                        m_letency = (m_measureCount * m_letency + m_testCount)/(m_measureCount + 1);
+                        m_latency = (m_measureCount * m_latency + m_testCount)/(m_measureCount + 1);
                         m_measureCount++;
-                        printf(" AE Letency: %.2f\n", m_letency);
+                        printf(" AE Latency: %.2f\n", m_latency);
                         m_testCount = 0;
                         m_imageSource->setExposure(m_exposureMax);
                         m_testState = TestStateMeasureMax;
@@ -147,9 +147,9 @@ int V4L2AutoExposure::testLetency(V4L2Image &image)
                 printf("^");
                 fflush(stdout);
                 if (abs(mean - m_meanMax) < 0.1*m_meanMax+1) {
-                        m_letency = (m_measureCount * m_letency + m_testCount)/(m_measureCount + 1);
+                        m_latency = (m_measureCount * m_latency + m_testCount)/(m_measureCount + 1);
                         m_measureCount++;
-                        printf(" AE Letency: %.2f\n", m_letency);
+                        printf(" AE Latency: %.2f\n", m_latency);
                         m_testCount = 0;
                         m_imageSource->setExposure(m_exposureMin);
                         m_testState = TestStateMeasureMin;

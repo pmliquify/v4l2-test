@@ -11,7 +11,7 @@ public:
         V4L2ImageSource();
         ~V4L2ImageSource();
 
-        int open(const std::string DevicePath);
+        int open(const std::string DevicePath, const std::string subDevicePath);
         int close();
         int getFormat();
         int setFormat(int PixelFormat);

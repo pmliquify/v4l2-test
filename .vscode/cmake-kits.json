@@ -1,0 +1,6 @@
+[
+        {
+                "name": "NVIDIA aarch64",
+                "toolchainFile": "toolchain/aarch64-nvidia-cuda-toolchain.cmake"
+        }
+]

@@ -7,11 +7,6 @@
 class V4L2AutoExposure
 {
 public:
-        V4L2AutoExposure(V4L2ImageSource *imageSource);
-        
-        int init(u_int32_t exposure);
-        int exec(V4L2Image &image);
-        
         bool m_test;
         u_int16_t m_sub;
         u_int16_t m_aep;
@@ -20,10 +15,12 @@ public:
         u_int32_t m_exposureMin;
         u_int32_t m_exposureMax;
 
-private:
-        int calculateExposure(V4L2Image &image);
-        int testLetency(V4L2Image &image);
+        V4L2AutoExposure(V4L2ImageSource *imageSource);
+        
+        int init(u_int32_t exposure);
+        int exec(V4L2Image &image);
 
+private:
         typedef enum {
                 TestStateInit,
                 TestStateInitMin,
@@ -41,5 +38,8 @@ private:
         u_int16_t m_measureCount;
         u_int16_t m_meanMin;
         u_int16_t m_meanMax;
-        float m_letency;
+        float m_latency;
+
+        int calculateExposure(V4L2Image &image);
+        int testLatency(V4L2Image &image);
 };

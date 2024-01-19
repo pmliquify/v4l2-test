@@ -9,15 +9,14 @@ void printHelp()
 {
         printf("  Usage: v4l2-test [OPTION...]\n");
         printf("\n");
-        // printf("  --address, \n");
-        printf("  --aeD      \n");
-        printf("  --aeP      \n");
-        printf("  --aeMin    \n");
-        printf("  --aeMax    \n");
+        printf("  --aeD      Set auto exposure D factor of PD controller\n");
+        printf("  --aeP      Set auto exposure P factor of PD controller\n");
+        printf("  --aeMin    Set auto exposure minimal mean image brightness\n");
+        printf("  --aeMax    Set auto exposure maximal mean image brightness\n");
         printf("  --aeSub    Set auto exposure sub sampling\n");
-        printf("  --aeTarget \n");
-        printf("  --aeTest   \n");
-        printf("  -bi,       Set binning (0: 1x1, 1, 1x2, 2: 2x2)\n");
+        printf("  --aeTarget Set auto exposure target mean image brightness\n");
+        printf("  --aeTest   Activate auto exposure\n");
+        printf("  -bi,       Set binning (see binning modes of each camera module)\n");
         printf("  -bl,       Set black level\n");
         printf("  -d,        Set device /dev/video0\n");
         printf("  -e,        Set exposure time\n");
@@ -34,6 +33,7 @@ void printHelp()
         printf("  --port,    \n");
         printf("  -r,        Set frame rate\n");
         printf("  -s,        Start image streaming\n");
+        printf("  -sd,       Set subdevice /dev/v4l-subdev0\n");
         printf("  --shift,   Set bit shift for each pixel in RAW10, RAW12 format\n");
         printf("  -t,        Set trigger mode\n");
         printf("  --udp,     \n");
@@ -62,6 +62,7 @@ int processImage(CommandArgs &args, V4L2ImageSource &imageSource, V4L2Image &ima
 
         image.print(print, x, y, 10, shift);
         if (fb) frameBuffer.print(image, shift);
+        
         return 0;
 }
 
@@ -75,7 +76,7 @@ int main(int argc, const char *argv[])
         }
 
         V4L2ImageSource imageSource;  
-        imageSource.open(args.option("-d", "/dev/video0"));
+        imageSource.open(args.option("-d", "/dev/video0"), args.option("-sd", ""));
         imageSource.printFormat();
         
         if (args.exists("-e")) {
@@ -106,7 +107,7 @@ int main(int argc, const char *argv[])
                 }
         }
 
-        // int imageCount      = args.optionInt("-n", -1);
+        int imageCount      = args.optionInt("-n", -1);
         
         V4L2Image image;
         image.m_shift       = args.optionInt("--shift", 0);
@@ -119,50 +120,50 @@ int main(int argc, const char *argv[])
         autoExposure.m_exposureMin = args.optionInt("--aeMin", 0);
         autoExposure.m_exposureMax = args.optionInt("--aeMax", 10000);
         // V4L2ImageSocket socket;
-        // FrameBuffer frameBuffer;
-        // bool fb              = args.exists("--fb");
+        FrameBuffer frameBuffer;
+        bool fb              = args.exists("--fb");
 
-        // if (args.exists("-i")) {
-        //         if (fb) {
-        //                 frameBuffer.open();
-        //                 frameBuffer.fill();
-        //         }
+        if (args.exists("-i")) {
+                if (fb) {
+                        frameBuffer.open();
+                        frameBuffer.fill();
+                }
 
-        //         for (int index = 0; index < imageCount; index++) {
-        //                 imageSource.getImage(image, 1000000);
-        //                 processImage(args, imageSource, image, frameBuffer, fb);
-        //         }
-        // }
+                for (int index = 0; index < imageCount; index++) {
+                        imageSource.getImage(image, 1000000);
+                        processImage(args, imageSource, image, frameBuffer, fb);
+                }
+        }
         if (args.exists("-s")) {
-                // if (fb) {
-                //         frameBuffer.open();
-                //         frameBuffer.fill();
-                // }
+                if (fb) {
+                        frameBuffer.open();
+                        frameBuffer.fill();
+                }
                 // socket.open(address, port);
 
                 if (0 == imageSource.streamOn(3)) {
-                        // if (-1 == imageCount) {
+                        if (-1 == imageCount) {
                                 while(true) {
                                         if (0 == imageSource.getNextImage(image, 1000000)) {
-                                                // processImage(args, imageSource, image, frameBuffer, fb);
-                                                autoExposure.exec(image);
+                                                processImage(args, imageSource, image, frameBuffer, fb);
+                                                // autoExposure.exec(image);
                                                 imageSource.releaseImage(image);
                                         }
                                 }
-                        // } else {
-                        //         for (int index = 0; index < imageCount; index++) {
-                        //                 if (0 == imageSource.getNextImage(image, 1000000)) {
-                        //                         processImage(args, imageSource, image, frameBuffer, fb);
-                        //                         imageSource.releaseImage(image);
-                        //                 }
-                        //         }
-                        // }
-                        // imageSource.streamOff();
+                        } else {
+                                for (int index = 0; index < imageCount; index++) {
+                                        if (0 == imageSource.getNextImage(image, 1000000)) {
+                                                processImage(args, imageSource, image, frameBuffer, fb);
+                                                imageSource.releaseImage(image);
+                                        }
+                                }
+                        }
+                        imageSource.streamOff();
                 }
         }
 
         // socket.close();
-        // if (fb) frameBuffer.close();
+        if (fb) frameBuffer.close();
         imageSource.close();
 
         return 0;

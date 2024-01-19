@@ -22,7 +22,7 @@ V4L2ImageSource::~V4L2ImageSource()
         close();
 }
 
-int V4L2ImageSource::open(const std::string devicePath)
+int V4L2ImageSource::open(const std::string devicePath, const std::string subDevicePath)
 {
         m_deviceFd = ::open(devicePath.c_str(), O_RDWR, 0);
         if (-1 == m_deviceFd) {
@@ -40,8 +40,13 @@ int V4L2ImageSource::open(const std::string devicePath)
                 return -1;
         }
 
-        // const char *subdevicePath = "/dev/v4l-subdev0";
-        const char *subdevicePath = devicePath.c_str();
+        const char *subdevicePath = NULL;
+        if (subDevicePath.empty()) {
+                subdevicePath = devicePath.c_str();
+        } else {
+                subdevicePath = subDevicePath.c_str();
+        }
+        
         m_subDeviceFd = ::open(subdevicePath, O_RDWR, 0);
         if (-1 == m_deviceFd) {
                 handleErrorForOpen(subdevicePath, errno);

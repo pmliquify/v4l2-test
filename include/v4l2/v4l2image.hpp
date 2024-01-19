@@ -10,7 +10,7 @@ public:
         V4L2Image();
 
         void print(u_int32_t format, int16_t x, int16_t y, u_int8_t count = 10, int16_t shift = 0);
-        int stats(u_int16_t &min, u_int16_t &max, u_int16_t &mean, u_int8_t sub);
+        int stats(u_int16_t &min, u_int16_t &max, u_int16_t &mean, u_int8_t sub) const;
 
         u_int16_t m_bufferIndex;
         u_int16_t m_width;
@@ -26,4 +26,9 @@ public:
 
 private:
         u_int64_t m_lastTimestamp;
+        u_int8_t m_subMask;
+
+        int stats_CPU(u_int16_t &min, u_int16_t &max, u_int16_t &mean, u_int8_t sub) const;
+        int stats_OpenCV_resize(u_int16_t &min, u_int16_t &max, u_int16_t &mean, u_int8_t sub) const;
+        int stats_OpenCV_crop(u_int16_t &min, u_int16_t &max, u_int16_t &mean, u_int8_t sub) const;
 };
