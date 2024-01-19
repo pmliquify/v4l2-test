@@ -1,6 +1,6 @@
 # V4L2 testing application
 
-## Version 0.1.0
+## Version 0.2.0
 
 ## Build
 

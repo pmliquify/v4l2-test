@@ -8,7 +8,9 @@
 void printHelp()
 {
         printf("  Usage: v4l2-test [OPTION...]\n");
+        printf("  Version 0.2.0\n");
         printf("\n");
+        printf("  --ae       Activates auto exposure\n");
         printf("  --aeD      Set auto exposure D factor of PD controller\n");
         printf("  --aeP      Set auto exposure P factor of PD controller\n");
         printf("  --aeMin    Set auto exposure minimal mean image brightness\n");
@@ -43,7 +45,7 @@ void printHelp()
 }
 
 int processImage(CommandArgs &args, V4L2ImageSource &imageSource, V4L2Image &image, 
-                 FrameBuffer &frameBuffer, bool fb)
+                 FrameBuffer &frameBuffer, bool fb, V4L2AutoExposure &autoExposure, bool ae)
 {
         int x               = args.optionInt("-x", -1);
         int y               = args.optionInt("-y", -1);
@@ -53,14 +55,18 @@ int processImage(CommandArgs &args, V4L2ImageSource &imageSource, V4L2Image &ima
                 imageSource.setSelection((x==-1)?0:x, (y==-1)?0:y, width, height);
         }
 
-        // int delay           = args.optionInt("-l",  0);
+        int delay           = args.optionInt("-l",  0);
+        if (delay > 0) {
+                usleep(delay);
+        }
         int print           = args.optionInt("-p", 16);
         int shift           = args.optionInt("--shift", 0);
-        // std::string address = args.option("--address", "127.0.0.1");
-        // int port            = args.optionInt("--port", 9000);
-        // int sendBuffSize    = args.optionInt("--size", 65000);
 
-        image.print(print, x, y, 10, shift);
+        if (ae) {
+                autoExposure.exec(image);
+        } else {
+                image.print(print, x, y, 10, shift);
+        }
         if (fb) frameBuffer.print(image, shift);
         
         return 0;
@@ -111,15 +117,19 @@ int main(int argc, const char *argv[])
         
         V4L2Image image;
         image.m_shift       = args.optionInt("--shift", 0);
+
         V4L2AutoExposure autoExposure(&imageSource);
-        autoExposure.m_aed  = args.optionInt("--aeD", 0);
-        autoExposure.m_aep  = args.optionInt("--aeP", 1);
-        autoExposure.m_sub  = args.optionInt("--aeSub", 1);
-        autoExposure.m_test = args.optionInt("--aeTest", 0);
-        autoExposure.m_aeTarget = args.optionInt("--aeTarget", 100);
-        autoExposure.m_exposureMin = args.optionInt("--aeMin", 0);
-        autoExposure.m_exposureMax = args.optionInt("--aeMax", 10000);
-        // V4L2ImageSocket socket;
+        bool ae             = args.exists("--ae");
+        if (ae) {
+                autoExposure.m_aed  = args.optionInt("--aeD", 0);
+                autoExposure.m_aep  = args.optionInt("--aeP", 1);
+                autoExposure.m_sub  = args.optionInt("--aeSub", 1);
+                autoExposure.m_test = args.optionInt("--aeTest", 0);
+                autoExposure.m_aeTarget = args.optionInt("--aeTarget", 100);
+                autoExposure.m_exposureMin = args.optionInt("--aeMin", 0);
+                autoExposure.m_exposureMax = args.optionInt("--aeMax", 10000);
+        }
+        
         FrameBuffer frameBuffer;
         bool fb              = args.exists("--fb");
 
@@ -131,7 +141,7 @@ int main(int argc, const char *argv[])
 
                 for (int index = 0; index < imageCount; index++) {
                         imageSource.getImage(image, 1000000);
-                        processImage(args, imageSource, image, frameBuffer, fb);
+                        processImage(args, imageSource, image, frameBuffer, fb, autoExposure, ae);
                 }
         }
         if (args.exists("-s")) {
@@ -139,21 +149,19 @@ int main(int argc, const char *argv[])
                         frameBuffer.open();
                         frameBuffer.fill();
                 }
-                // socket.open(address, port);
 
                 if (0 == imageSource.streamOn(3)) {
                         if (-1 == imageCount) {
                                 while(true) {
                                         if (0 == imageSource.getNextImage(image, 1000000)) {
-                                                processImage(args, imageSource, image, frameBuffer, fb);
-                                                // autoExposure.exec(image);
+                                                processImage(args, imageSource, image, frameBuffer, fb, autoExposure, ae);
                                                 imageSource.releaseImage(image);
                                         }
                                 }
                         } else {
                                 for (int index = 0; index < imageCount; index++) {
                                         if (0 == imageSource.getNextImage(image, 1000000)) {
-                                                processImage(args, imageSource, image, frameBuffer, fb);
+                                                processImage(args, imageSource, image, frameBuffer, fb, autoExposure, ae);
                                                 imageSource.releaseImage(image);
                                         }
                                 }
@@ -162,7 +170,6 @@ int main(int argc, const char *argv[])
                 }
         }
 
-        // socket.close();
         if (fb) frameBuffer.close();
         imageSource.close();
 
