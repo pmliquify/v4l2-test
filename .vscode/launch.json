@@ -28,7 +28,7 @@
                                 }
                         ],
                         "miDebuggerPath": "/usr/bin/gdb-multiarch",
-                        "miDebuggerServerAddress": "192.168.178.92:2000"
+                        "miDebuggerServerAddress": "nvidia:2000"
                 },
                 {
                         "name": "Launch Server",
@@ -54,7 +54,7 @@
                                 }
                         ],
                         "miDebuggerPath": "/usr/bin/gdb-multiarch",
-                        "miDebuggerServerAddress": "192.168.178.92:2000"
+                        "miDebuggerServerAddress": "nvidia:2000"
                 }
         ]
 }

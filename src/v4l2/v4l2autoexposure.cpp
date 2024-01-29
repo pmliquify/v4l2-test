@@ -21,6 +21,33 @@ V4L2AutoExposure::V4L2AutoExposure(V4L2ImageSource *imageSource) :
         init(10000);
 }
 
+void V4L2AutoExposure::printArgs()
+{
+        printArgSection("Auto Exposure");
+        printArg("--ae",        "Activates auto exposure");
+        printArg("--aeD",       "Set auto exposure D factor of PD controller");
+        printArg("--aeP",       "Set auto exposure P factor of PD controller");
+        printArg("--aeMin",     "Set auto exposure minimal mean image brightness");
+        printArg("--aeMax",     "Set auto exposure maximal mean image brightness");
+        printArg("--aeSub",     "Set auto exposure sub sampling");
+        printArg("--aeTarget",  "Set auto exposure target mean image brightness");
+        printArg("--aeTest",    "Activate auto exposure");
+}
+
+int V4L2AutoExposure::setup(CommandArgs &args)
+{
+        m_active        = args.exists("--ae");
+        m_aed           = args.optionInt("--aeD", 0);
+        m_aep           = args.optionInt("--aeP", 1);
+        m_sub           = args.optionInt("--aeSub", 1);
+        m_test          = args.optionInt("--aeTest", 0);
+        m_aeTarget      = args.optionInt("--aeTarget", 100);
+        m_exposureMin   = args.optionInt("--aeMin", 0);
+        m_exposureMax   = args.optionInt("--aeMax", 10000);
+        
+        return 0;
+}
+
 int V4L2AutoExposure::init(u_int32_t exposure)
 {
         m_exposure = exposure;

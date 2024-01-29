@@ -102,8 +102,9 @@ void FrameBuffer::fill()
 #endif
 }
 
-void FrameBuffer::print(V4L2Image &image, u_int8_t shift)
+void FrameBuffer::print(V4L2Image &image)
 {
+        u_int8_t shift = image.shift();
         if (shift < 0) {
                 shift = 0;
         } 
@@ -111,7 +112,7 @@ void FrameBuffer::print(V4L2Image &image, u_int8_t shift)
                 shift = 16;
         }
 
-        switch (image.m_pixelformat) {
+        switch (image.pixelformat()) {
         case V4L2_PIX_FMT_GREY:
         case V4L2_PIX_FMT_SRGGB8:
         case V4L2_PIX_FMT_SGBRG8:
@@ -140,8 +141,8 @@ void FrameBuffer::print(V4L2Image &image, u_int8_t shift)
 
 void FrameBuffer::print08(V4L2Image &image)
 {
-        u_int32_t width = (image.m_width < m_varScreenInfo.xres) ? image.m_width : m_varScreenInfo.xres;
-        u_int32_t height = (image.m_height < m_varScreenInfo.yres) ? image.m_height : m_varScreenInfo.yres-1;
+        u_int32_t width = (image.width() < m_varScreenInfo.xres) ? image.width() : m_varScreenInfo.xres;
+        u_int32_t height = (image.height() < m_varScreenInfo.yres) ? image.height() : m_varScreenInfo.yres-1;
         u_int32_t bytesPerPixelFB = m_varScreenInfo.bits_per_pixel/8;
         u_int8_t * ptrFB = (u_int8_t *)m_ptr;
         u_int8_t * ptrImage = (u_int8_t *)image.m_planes.at(0);
@@ -160,7 +161,7 @@ void FrameBuffer::print08(V4L2Image &image)
 #endif
                         u_int32_t yOffsetPtrFB = m_varScreenInfo.xoffset * bytesPerPixelFB
                                 + (y + m_varScreenInfo.yoffset) * m_fixScreenInfo.line_length;
-                        u_int32_t YOffsetPtrImage = (y * image.m_bytesPerLine);
+                        u_int32_t YOffsetPtrImage = (y * image.bytesPerLine());
 
                         u_int32_t bytesPerPixelImage = 1;
                         u_int8_t pixelStep = 8;
@@ -209,8 +210,8 @@ void FrameBuffer::print08(V4L2Image &image)
 
 void FrameBuffer::print16(V4L2Image &image, u_int8_t shift)
 {
-        u_int32_t width = (image.m_width < m_varScreenInfo.xres) ? image.m_width : m_varScreenInfo.xres;
-        u_int32_t height = (image.m_height < m_varScreenInfo.yres) ? image.m_height : m_varScreenInfo.yres;
+        u_int32_t width = (image.width() < m_varScreenInfo.xres) ? image.width() : m_varScreenInfo.xres;
+        u_int32_t height = (image.height() < m_varScreenInfo.yres) ? image.height() : m_varScreenInfo.yres;
         u_int32_t bytesPerPixelFB = m_varScreenInfo.bits_per_pixel/8;
         u_int8_t * ptrFB = (u_int8_t *)m_ptr;
         u_int8_t * ptrImage = (u_int8_t *)image.m_planes.at(0);
@@ -229,7 +230,7 @@ void FrameBuffer::print16(V4L2Image &image, u_int8_t shift)
 #endif
                         u_int32_t yOffsetPtrFB = m_varScreenInfo.xoffset * bytesPerPixelFB
                                 + (y + m_varScreenInfo.yoffset) * m_fixScreenInfo.line_length;
-                        u_int32_t YOffsetPtrImage = (y * image.m_bytesPerLine);
+                        u_int32_t YOffsetPtrImage = (y * image.bytesPerLine());
 
                         u_int32_t bytesPerPixelImage = 2;
                         u_int8_t pixelStep = 4;

@@ -13,7 +13,7 @@ class FrameBuffer
                 int open();
                 int close();
                 void fill();
-                void print(V4L2Image &image, u_int8_t shift);
+                void print(V4L2Image &image);
 
         protected:
                 int m_fd;

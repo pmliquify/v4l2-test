@@ -22,6 +22,57 @@ V4L2ImageSource::~V4L2ImageSource()
         close();
 }
 
+void V4L2ImageSource::printArgs()
+{
+        printArgSection("ImageSource");
+        printArg("-d",  "Set device /dev/video0");
+        printArg("-sd", "Set subdevice /dev/v4l-subdev0");
+        printArg("-bi", "Set binning (see binning modes of each camera module)");
+        printArg("-bl", "Set black level");
+        printArg("-e",  "Set exposure time");
+        printArg("-f",  "Set pixel format");
+        printArg("-g",  "Set gain value");
+        printArg("-m",  "Set IO mode");
+        printArg("-r",  "Set frame rate");
+        printArg("-t",  "Set trigger mode");
+}
+
+int V4L2ImageSource::setup(CommandArgs &args)
+{
+        open(args.option("-d", "/dev/video0"), args.option("-sd", ""));
+        printFormat();
+        
+        if (args.exists("-bi")) {
+                setBinning(args.optionInt("-bi"));
+        }
+        if (args.exists("-bl")) {
+                setBlackLevel(args.optionInt("-bl"));
+        }
+        if (args.exists("-e")) {
+                setExposure(args.optionInt("-e"));
+        }
+        if (args.exists("-f")) {
+                std::string format = args.option("-f");
+                if (format.size() == 4) {
+                        setFormat(*(int *)format.c_str());
+                }
+        }
+        if (args.exists("-g")) {
+                setGain(args.optionInt("-g"));
+        }
+        if (args.exists("-m")) {
+                setIOMode(args.optionInt("-m"));
+        }
+        if (args.exists("-r")) {
+                setFrameRate(args.optionInt("-r"));
+        }
+        if (args.exists("-t")) {
+                setTriggerMode(args.optionInt("-t"));
+        }
+        
+        return 0;
+}
+
 int V4L2ImageSource::open(const std::string devicePath, const std::string subDevicePath)
 {
         m_deviceFd = ::open(devicePath.c_str(), O_RDWR, 0);
@@ -42,16 +93,17 @@ int V4L2ImageSource::open(const std::string devicePath, const std::string subDev
 
         const char *subdevicePath = NULL;
         if (subDevicePath.empty()) {
-                subdevicePath = devicePath.c_str();
+                m_subDeviceFd = m_deviceFd;
+
         } else {
                 subdevicePath = subDevicePath.c_str();
+                m_subDeviceFd = ::open(subdevicePath, O_RDWR, 0);
+                if (-1 == m_deviceFd) {
+                        handleErrorForOpen(subdevicePath, errno);
+                        return -1;
+                }
         }
         
-        m_subDeviceFd = ::open(subdevicePath, O_RDWR, 0);
-        if (-1 == m_deviceFd) {
-                handleErrorForOpen(subdevicePath, errno);
-                return -1;
-        }
         return 0;
 }
 
@@ -62,8 +114,10 @@ int V4L2ImageSource::close()
         if (m_deviceFd != 0 && -1 == ::close(m_deviceFd)) {
                 handleErrorForClose(m_deviceFd, errno);
         }
-        if (-1 == ::close(m_subDeviceFd)) {
-                handleErrorForClose(m_subDeviceFd, errno);
+        if (m_deviceFd != m_subDeviceFd) {
+                if (-1 == ::close(m_subDeviceFd)) {
+                        handleErrorForClose(m_subDeviceFd, errno);
+                }
         }
         m_deviceFd = 0;
         m_subDeviceFd = 0;
@@ -238,27 +292,21 @@ int V4L2ImageSource::getNextImage(V4L2Image &image, int timeout, bool lastImage)
         }
 
         image.m_bufferIndex = m_nextBufferIndex;
-        image.m_sequence = buffer->sequence;
-        image.m_timestamp = buffer->timestamp.tv_sec*1e3 + buffer->timestamp.tv_usec/1e3;
-        image.m_bytesUsed = buffer->bytesused;
+        u_int64_t timestamp = buffer->timestamp.tv_sec*1e3 + buffer->timestamp.tv_usec/1e3;
 
         switch (m_format.type) {
         case V4L2_BUF_TYPE_VIDEO_CAPTURE:
-                image.m_width = m_format.fmt.pix.width;
-                image.m_height = m_format.fmt.pix.height;
-                image.m_bytesPerLine = m_format.fmt.pix.bytesperline;
-                image.m_imageSize = m_format.fmt.pix.sizeimage;
-                image.m_pixelformat = m_format.fmt.pix.pixelformat;
+                image.init(m_format.fmt.pix.width, m_format.fmt.pix.height, m_format.fmt.pix.bytesperline,
+                        m_format.fmt.pix.sizeimage, buffer->bytesused, m_format.fmt.pix.pixelformat, 
+                        buffer->sequence, timestamp);
                 image.m_planes.resize(1);
                 image.m_planes[0] = m_buffers[m_nextBufferIndex].ptrs[0];
                 break;
 
         case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
-                image.m_width = m_format.fmt.pix_mp.width;
-                image.m_height = m_format.fmt.pix_mp.height;
-                image.m_bytesPerLine = m_format.fmt.pix_mp.plane_fmt->bytesperline;
-                image.m_pixelformat = m_format.fmt.pix_mp.pixelformat;
-                image.m_imageSize = m_format.fmt.pix_mp.plane_fmt->sizeimage;
+                image.init(m_format.fmt.pix_mp.width, m_format.fmt.pix_mp.height, m_format.fmt.pix_mp.plane_fmt->bytesperline,
+                        m_format.fmt.pix_mp.plane_fmt->sizeimage, buffer->bytesused, m_format.fmt.pix_mp.pixelformat, 
+                        buffer->sequence, timestamp);
                 image.m_planes.resize(buffer->length);
                 for (unsigned int planeIndex = 0; planeIndex < buffer->length; planeIndex++) {
                         image.m_planes[planeIndex] = m_buffers[m_nextBufferIndex].ptrs[planeIndex];

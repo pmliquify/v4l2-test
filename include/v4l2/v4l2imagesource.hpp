@@ -2,14 +2,18 @@
 
 #include <string>
 #include <linux/videodev2.h>
+#include <commandargclass.hpp>
 #include <v4l2image.hpp>
 
 
-class V4L2ImageSource
+class V4L2ImageSource : public CommandArgClass
 {
 public:
         V4L2ImageSource();
         ~V4L2ImageSource();
+
+        void printArgs();
+        int setup(CommandArgs &args);
 
         int open(const std::string DevicePath, const std::string subDevicePath);
         int close();

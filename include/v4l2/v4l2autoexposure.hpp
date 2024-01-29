@@ -1,12 +1,14 @@
 #pragma once
 
 #include <v4l2imagesource.hpp>
-#include <v4l2image.hpp>
+#include <commandargclass.hpp>
 #include <list>
 
-class V4L2AutoExposure
+
+class V4L2AutoExposure : public CommandArgClass
 {
 public:
+        bool m_active;
         bool m_test;
         u_int16_t m_sub;
         u_int16_t m_aep;
@@ -17,6 +19,9 @@ public:
 
         V4L2AutoExposure(V4L2ImageSource *imageSource);
         
+        void printArgs();
+        int setup(CommandArgs &args);
+
         int init(u_int32_t exposure);
         int exec(V4L2Image &image);
 

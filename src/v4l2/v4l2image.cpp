@@ -13,68 +13,94 @@ V4L2Image::V4L2Image() :
         m_sequence(0),
         m_timestamp(0),
         m_lastTimestamp(0),
-    m_subMask(0)
+        m_subMask(0)
 {
+}
+
+void V4L2Image::printArgs()
+{
+        printArgSection("Image");
+        printArg("--shift", "Set bit shift for each pixel in RAW10, RAW12 format");
+}
+
+int V4L2Image::setup(CommandArgs &args)
+{
+        m_shift = args.optionInt("--shift", 0);
+    
+        return 0;
+}
+
+void V4L2Image::init(u_int16_t width, u_int16_t height, u_int16_t bytesPerLine, u_int32_t imageSize,
+                u_int32_t bytesUsed, u_int32_t pixelformat, u_int32_t sequence, u_int64_t timestamp)
+{
+        m_width = width;
+        m_height = height;
+        m_bytesPerLine = bytesPerLine;
+        m_imageSize = imageSize;
+        m_bytesUsed = bytesUsed;
+        m_pixelformat = pixelformat;
+        m_sequence = sequence;
+        m_timestamp = timestamp;
 }
 
 void print_line_byte_hex(char *st, int x1, int x2, int y, int pitch)
 {
-    printf(" (%u, %u) ", x1, y);
-    for (int x=x1; x<=x2; x=x+2) {
-        char val1 = st[y*pitch + x];
-        char val2 = st[y*pitch + x+1];
-        printf("%02x%02x ", val1, val2);
-    }
-    printf("\n");
+        printf(" (%u, %u) ", x1, y);
+        for (int x=x1; x<=x2; x=x+2) {
+                char val1 = st[y*pitch + x];
+                char val2 = st[y*pitch + x+1];
+                printf("%02x%02x ", val1, val2);
+        }
+        printf("\n");
 }
 
 void print_line_dec(char *st, int x1, int x2, int y, int pitch, int shift)
 {
-    printf(" (%u, %u) ", x1, y);
-    for (int x=x1; x<=x2; x=x+2) {
-        short val16 = (*(short *)&st[y*pitch + x]) >> shift;
-        printf("%04u ", val16);
-    }
-    printf("\n");
+        printf(" (%u, %u) ", x1, y);
+        for (int x=x1; x<=x2; x=x+2) {
+                short val16 = (*(short *)&st[y*pitch + x]) >> shift;
+                printf("%04u ", val16);
+        }
+        printf("\n");
 }
 
 void print_byte_bit(char val)
 {
-    for(int b=7; b>=0; b--) {
-        printf("%u", (char)((val >> b) & 0x01));
-    }
+        for(int b=7; b>=0; b--) {
+                printf("%u", (char)((val >> b) & 0x01));
+        }
 }
 
 void print_line_bit(char *st, int x1, int x2, int y, int pitch)
 {
-    printf(" (%u, %u) ", x1, y);
-    for (int x=x1; x<=x2; x=x+2) {
-        char val1 = st[y*pitch + x];
-        char val2 = st[y*pitch + x+1];
-        print_byte_bit(val2);
-        print_byte_bit(val1);
-        printf(" ");
-    }
-    printf("\n");
+        printf(" (%u, %u) ", x1, y);
+        for (int x=x1; x<=x2; x=x+2) {
+                char val1 = st[y*pitch + x];
+                char val2 = st[y*pitch + x+1];
+                print_byte_bit(val2);
+                print_byte_bit(val1);
+                printf(" ");
+        }
+        printf("\n");
 }
 
 void print_bayer_pattern(char *st, int x, int y, int pitch)
 {
-    int shift = 6;
-    short val1 = *(short *)&st[(y  )*pitch + x  ] >> shift;
-    short val2 = *(short *)&st[(y  )*pitch + x+2] >> shift;
-    short val3 = *(short *)&st[(y+1)*pitch + x  ] >> shift;
-    short val4 = *(short *)&st[(y+1)*pitch + x+2] >> shift;
-    printf("\033[2J\033[1;1H");
-    printf("(%4d, %4d) %4d %4d\n", x, y, val1, val2);
-    printf("             %4d %4d\n",     val3, val4);
+        int shift = 6;
+        short val1 = *(short *)&st[(y  )*pitch + x  ] >> shift;
+        short val2 = *(short *)&st[(y  )*pitch + x+2] >> shift;
+        short val3 = *(short *)&st[(y+1)*pitch + x  ] >> shift;
+        short val4 = *(short *)&st[(y+1)*pitch + x+2] >> shift;
+        printf("\033[2J\033[1;1H");
+        printf("(%4d, %4d) %4d %4d\n", x, y, val1, val2);
+        printf("             %4d %4d\n",     val3, val4);
 }
 
 void print_stats(const V4L2Image *image, int sub) 
 {
-    u_int16_t min, max, mean;
-    image->stats(min, max, mean, sub);
-    printf(" Stats (min: %4u, max: %4u; mean: %4u)\n", min, max, mean);
+        u_int16_t min, max, mean;
+        image->stats(min, max, mean, sub);
+        printf(" Stats (min: %4u, max: %4u; mean: %4u)\n", min, max, mean);
 }
 
 void V4L2Image::print(u_int32_t format, int16_t x, int16_t y, u_int8_t count, int16_t shift)
@@ -107,65 +133,65 @@ void V4L2Image::print(u_int32_t format, int16_t x, int16_t y, u_int8_t count, in
 
 int V4L2Image::stats(u_int16_t &min, u_int16_t &max, u_int16_t &mean, u_int8_t sub) const
 {
-    return stats_CPU(min, max, mean, sub);
-    // return stats_OpenCV_resize(min, max, mean, sub);
-    // return stats_OpenCV_crop(min, max, mean, sub);
+        return stats_CPU(min, max, mean, sub);
+        // return stats_OpenCV_resize(min, max, mean, sub);
+        // return stats_OpenCV_crop(min, max, mean, sub);
 }
 
 int V4L2Image::stats_CPU(u_int16_t &min, u_int16_t &max, u_int16_t &mean, u_int8_t sub) const
 {
-    char *st = (char *)m_planes[0];
-    u_int32_t pitch = m_bytesPerLine;
-    u_int32_t pixelwidth = m_bytesPerLine/m_width;
-    u_int32_t xMax = m_width*pixelwidth;
-    u_int32_t xStep = sub*pixelwidth;
-    u_int32_t yStep = sub*pitch;
-    u_int64_t sum = 0;
-    u_int32_t count = 0;
-    min = -1;
-    max = 0;
-    mean = 0;
+        char *st = (char *)m_planes[0];
+        u_int32_t pitch = m_bytesPerLine;
+        u_int32_t pixelwidth = m_bytesPerLine/m_width;
+        u_int32_t xMax = m_width*pixelwidth;
+        u_int32_t xStep = sub*pixelwidth;
+        u_int32_t yStep = sub*pitch;
+        u_int64_t sum = 0;
+        u_int32_t count = 0;
+        min = -1;
+        max = 0;
+        mean = 0;
 
 #undef _OPENMP
 #if _OPENMP 
 #pragma omp parallel
-        {
-    int threadId = omp_get_thread_num();
-    u_int32_t threadCount = omp_get_num_procs();
-        omp_set_num_threads(threadCount);
-        u_int32_t threadHeight = m_height/threadCount;
-    u_int32_t yMin = threadId   * threadHeight*pitch;
-    u_int32_t yMax = (threadId+1) * threadHeight*pitch;
-    u_int64_t lsum = 0;
+                {
+        int threadId = omp_get_thread_num();
+        u_int32_t threadCount = omp_get_num_procs();
+                omp_set_num_threads(threadCount);
+                u_int32_t threadHeight = m_height/threadCount;
+        u_int32_t yMin = threadId   * threadHeight*pitch;
+        u_int32_t yMax = (threadId+1) * threadHeight*pitch;
+        u_int64_t lsum = 0;
 #else
-    u_int32_t yMin = 0;
-    u_int32_t yMax = m_height*pitch;
+        u_int32_t yMin = 0;
+        u_int32_t yMax = m_height*pitch;
 #endif
-    for (u_int32_t y = yMin; y < yMax; y += yStep) {
-        for (u_int32_t x = 0; x < xMax; x += xStep) {
-            u_int32_t index = y + x;
-            char *pixel = st + index;
-            u_int16_t val16 = (*(u_int16_t*)pixel);
-            val16 = val16 >> m_shift;
-            if (val16 < min) {
-                min = val16;
-            }
-            if (val16 > max) {
-                max = val16;
-            }
+        for (u_int32_t y = yMin; y < yMax; y += yStep) {
+                for (u_int32_t x = 0; x < xMax; x += xStep) {
+                u_int32_t index = y + x;
+                char *pixel = st + index;
+                u_int16_t val16 = (*(u_int16_t*)pixel);
+                val16 = val16 >> m_shift;
+                if (val16 < min) {
+                        min = val16;
+                }
+                if (val16 > max) {
+                        max = val16;
+                }
 #if _OPENMP
-            lsum += val16;
+                lsum += val16;
 #else
-            sum += val16;
+                sum += val16;
 #endif
+                }
         }
-    }
 #if _OPENMP
-    sum += lsum;
-        }
+        sum += lsum;
+                }
 #endif
-    mean = sum / (m_width/sub * m_height/sub);
-    return 0;
+        mean = sum / (m_width/sub * m_height/sub);
+        return 0;
 }
 
 // int V4L2Image::stats_OpenCV_resize(u_int16_t &min, u_int16_t &max, u_int16_t &mean, u_int8_t sub) const

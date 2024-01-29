@@ -83,14 +83,14 @@ int V4L2ImageSocket::send(V4L2Image image, int sendBuffSize)
         if (m_fd < 0) return -1;
 
         struct ImageHeader header;
-        header.width = image.m_width;
-        header.height = image.m_height;
-        header.bytesPerLine = image.m_bytesPerLine;
-        header.imageSize = image.m_imageSize;
-        header.bytesUsed = image.m_bytesUsed;
-        header.pixelformat = image.m_pixelformat;
-        header.sequence = image.m_sequence;
-        header.timestamp = image.m_timestamp;
+        header.width = image.width();
+        header.height = image.height();
+        header.bytesPerLine = image.bytesPerLine();
+        header.imageSize = image.imageSize();
+        header.bytesUsed = image.bytesUsed();
+        header.pixelformat = image.pixelformat();
+        header.sequence = image.sequence();
+        header.timestamp = image.timestamp();
         header.numPlanes = image.m_planes.size();
 
         u_int32_t sendSize = sizeof(header);
@@ -99,7 +99,7 @@ int V4L2ImageSocket::send(V4L2Image image, int sendBuffSize)
                 (const struct sockaddr *) &m_addr, sizeof(m_addr));
 
 
-        sendSize = (image.m_bytesUsed > 0) ? image.m_bytesUsed : image.m_imageSize;
+        sendSize = (image.bytesUsed() > 0) ? image.bytesUsed() : image.imageSize();
         const char * data = (const char *)image.m_planes.at(0);
         int index = 0;
         while (index < sendSize) {
@@ -131,8 +131,8 @@ int V4L2ImageSocket::receive(V4L2Image &image)
                 MSG_WAITALL, (struct sockaddr *) &m_addr, &len); 
 
         if (size == sizeof(header)) {
-                if (image.m_imageSize != header.imageSize) {
-                        if (image.m_imageSize != 0) {
+                if (image.imageSize() != header.imageSize) {
+                        if (image.imageSize() != 0) {
                                 for (int index=0; index<image.m_planes.size(); index++) {
                                         free(image.m_planes.at(index));
                                 }
@@ -140,11 +140,11 @@ int V4L2ImageSocket::receive(V4L2Image &image)
                         image.m_planes.resize(header.numPlanes);
                         image.m_imageSize = header.imageSize;
                         for (int index=0; index<image.m_planes.size(); index++) {
-                                image.m_planes[index] = malloc(image.m_imageSize);
+                                image.m_planes[index] = malloc(image.imageSize());
                         }
                 }
 
-                u_int32_t receiveSize = (image.m_bytesUsed > 0) ? image.m_bytesUsed : image.m_imageSize;
+                u_int32_t receiveSize = (image.bytesUsed() > 0) ? image.bytesUsed() : image.imageSize();
                 char * data = (char *)image.m_planes[0];
                 int index = 0;
                 while (index < receiveSize) {
@@ -156,14 +156,8 @@ int V4L2ImageSocket::receive(V4L2Image &image)
                         index += size;
                 }
                                 
-                image.m_width = header.width;
-                image.m_height = header.height;
-                image.m_bytesPerLine = header.bytesPerLine;
-                image.m_imageSize = header.imageSize;
-                image.m_bytesUsed = header.bytesUsed;
-                image.m_pixelformat = header.pixelformat;
-                image.m_sequence = header.sequence;
-                image.m_timestamp = header.timestamp;
+                image.init(header.width, header.height, header.bytesPerLine, header.imageSize,
+                        header.bytesUsed, header.pixelformat, header.sequence, header.timestamp);
         }
 
         return 0;
