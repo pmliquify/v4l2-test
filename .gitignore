@@ -1,5 +1,4 @@
 .vscode-ctags
 *.log
-build/
-doc/
-target/
+build*/
+release/

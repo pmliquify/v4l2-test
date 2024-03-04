@@ -1,6 +1,14 @@
 [
         {
-                "name": "NVIDIA aarch64",
-                "toolchainFile": "toolchain/aarch64-nvidia-cuda-toolchain.cmake"
+                "name": "GNU generic toolchain",
+                "toolchainFile": "toolchain/gnu-generic-toolchain.cmake"
+        },
+        {
+                "name": "GNU aarch64 cross compile toolchain",
+                "toolchainFile": "toolchain/aarch64-cross-toolchain.cmake"
+        },
+        {
+                "name": "GNU aarch64 NVIDIA cross compile toolchain",
+                "toolchainFile": "toolchain/aarch64-nvidia-cross-toolchain.cmake"
         }
 ]

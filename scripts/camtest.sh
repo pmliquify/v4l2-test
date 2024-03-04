@@ -12,9 +12,9 @@ usage() {
 	echo "Tests camera features.                                     "
     echo "The test parameters are set for IMX183 on i.MX8 Quad Max   "
     echo "                                                           "
-    echo "NOTE: You need v4l2-test v0.2.0 and v4l2-ctl installed on  "
+    echo "NOTE: You need v4l2-test v0.3.0 and v4l2-ctl installed on  "
     echo "      your target.                                         "
-    echo "      https://github.com/pmliquify/v4l2-test/tree/v0.2.0   "
+    echo "      https://github.com/pmliquify/v4l2-test/tree/v0.3.0   "
 	echo "                                                           "
 	echo "Supported options:                                         "
     echo "    --auto                Runs all tests without waiting   "
@@ -74,7 +74,7 @@ wait_for_key() {
 }
 
 set_default_settings() {
-    settings="-d ${device} -sd ${subDevice} ${fb} -f ${pixelformat} --shift ${shift} -p 0 -s "
+    settings="-d ${device} -sd ${subDevice} ${fb} -f ${pixelformat} --shift ${shift} -p 0 stream "
 }
 
 exposure_test() {

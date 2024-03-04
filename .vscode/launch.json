@@ -5,11 +5,11 @@
         "version": "0.2.0",
         "configurations": [
                 {
-                        "name": "Launch Test",
+                        "name": "Launch arm64",
                         "type": "cppdbg",
                         "request": "launch",
-                        "program": "${workspaceFolder}/build/v4l2-test",
-                        "args": [ "-s" ],
+                        "program": "${workspaceFolder}/build_aarch64/v4l2-test",
+                        "args": [ "client", "--ip", "macbook-pro" ],
                         "stopAtEntry": false,
                         "cwd": "${fileDirname}",
                         "environment": [],
@@ -27,15 +27,15 @@
                                         "ignoreFailures": true
                                 }
                         ],
-                        "miDebuggerPath": "/usr/bin/gdb-multiarch",
-                        "miDebuggerServerAddress": "nvidia:2000"
+                        // "miDebuggerPath": "/usr/bin/gdb-multiarch",
+                        // "miDebuggerServerAddress": "nvidia:2000"
                 },
                 {
-                        "name": "Launch Server",
+                        "name": "Launch x86-64",
                         "type": "cppdbg",
                         "request": "launch",
-                        "program": "${workspaceFolder}/build/v4l2-server",
-                        "args": [ ],
+                        "program": "${workspaceFolder}/build_x86/v4l2-test",
+                        "args": [ "server", "stream", "--gui"],
                         "stopAtEntry": false,
                         "cwd": "${fileDirname}",
                         "environment": [],
@@ -53,8 +53,6 @@
                                         "ignoreFailures": true
                                 }
                         ],
-                        "miDebuggerPath": "/usr/bin/gdb-multiarch",
-                        "miDebuggerServerAddress": "nvidia:2000"
                 }
         ]
 }
