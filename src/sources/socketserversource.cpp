@@ -22,7 +22,7 @@ void SocketServerSource::printArgs()
 
 int SocketServerSource::setup(CommandArgs &args)
 {
-        u_int16_t port = args.optionInt("--port", 9000);
+        unsigned short port = args.optionInt("--port", 9000);
         if (m_socket.listen(port) != 0) {
                 printf("Unable to bind port %u!\n", port);
                 return -1;

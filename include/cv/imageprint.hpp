@@ -6,6 +6,6 @@
 class ImagePrint
 {
 public:
-    static void print(const Image *image, u_int32_t format, int16_t x, int16_t y, 
-        u_int64_t lastTimestamp, u_int8_t count = 10);
+    static void print(const Image *image, unsigned int format, short x, short y, 
+        unsigned long lastTimestamp, unsigned char count = 10);
 };

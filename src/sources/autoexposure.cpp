@@ -22,7 +22,7 @@ AutoExposure::AutoExposure() :
         init(10000);
 }
 
-int AutoExposure::init(u_int32_t exposure)
+int AutoExposure::init(unsigned int exposure)
 {
         m_exposure = exposure;
         m_meanLast = 0;
@@ -49,10 +49,10 @@ int AutoExposure::run(ImageSource *imageSource, Image *image)
 
 int AutoExposure::calculateExposure(ImageSource *imageSource, Image *image)
 {
-        u_int16_t rep = 1;
+        unsigned short rep = 1;
         clock_t startTime = clock();
 
-        u_int16_t min, max, mean;
+        unsigned short min, max, mean;
         for (int i=0; i<rep; i++) {
                 ImageStats::stats(image, min, max, mean, m_sub);
         }
@@ -62,8 +62,8 @@ int AutoExposure::calculateExposure(ImageSource *imageSource, Image *image)
         if (m_meanLast == 0) {
                 m_meanLast = mean;
         }
-        int32_t exposureP = ((int16_t)m_target - mean)*m_p;
-        int32_t exposureD = ((int16_t)mean - m_meanLast)*m_d;
+        int32_t exposureP = ((short)m_target - mean)*m_p;
+        int32_t exposureD = ((short)mean - m_meanLast)*m_d;
         m_exposure += exposureP + exposureD;
         imageSource->setExposure(m_exposure);
 
@@ -77,7 +77,7 @@ int AutoExposure::calculateExposure(ImageSource *imageSource, Image *image)
 
 int AutoExposure::testLatency(ImageSource *imageSource, Image *image)
 {
-        u_int16_t min, max, mean;
+        unsigned short min, max, mean;
         ImageStats::stats(image, min, max, mean, m_sub);
 
         switch(m_testState) {

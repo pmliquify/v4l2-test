@@ -4,16 +4,16 @@
 
 
 
-int ImageStats::stats(const Image *image, u_int16_t &min, u_int16_t &max, u_int16_t &mean, u_int8_t sub)
+int ImageStats::stats(const Image *image, unsigned short &min, unsigned short &max, unsigned short &mean, unsigned char sub)
 {
         return stats_CPU(image, min, max, mean, sub);
         // return stats_OpenCV_resize(image, min, max, mean, sub);
         // return stats_OpenCV_crop(image, min, max, mean, sub);
 }
 
-int ImageStats::stats_CPU(const Image *image, u_int16_t &min, u_int16_t &max, u_int16_t &mean, u_int8_t sub)
+int ImageStats::stats_CPU(const Image *image, unsigned short &min, unsigned short &max, unsigned short &mean, unsigned char sub)
 {
-        u_int64_t sum = 0;
+        unsigned long sum = 0;
         min = -1;
         max = 0;
         mean = 0;
@@ -23,19 +23,19 @@ int ImageStats::stats_CPU(const Image *image, u_int16_t &min, u_int16_t &max, u_
 #pragma omp parallel
                 {
         int threadId = omp_get_thread_num();
-        u_int32_t threadCount = omp_get_num_procs();
+        unsigned int threadCount = omp_get_num_procs();
         omp_set_num_threads(threadCount);
-        u_int32_t threadHeight = image->height()/threadCount;
-        u_int32_t yMin = threadId * threadHeight;
-        u_int32_t yMax = (threadId+1) * threadHeight;
-        u_int64_t lsum = 0;
+        unsigned int threadHeight = image->height()/threadCount;
+        unsigned int yMin = threadId * threadHeight;
+        unsigned int yMax = (threadId+1) * threadHeight;
+        unsigned long lsum = 0;
 #else
-        u_int32_t yMin = 0;
-        u_int32_t yMax = image->height();
+        unsigned int yMin = 0;
+        unsigned int yMax = image->height();
 #endif
-        for (u_int32_t y = yMin; y < yMax; y += sub) {
-                for (u_int32_t x = 0; x < image->width(); x += sub) {
-                        u_int16_t val16 = image->pixelValue(x, y);
+        for (unsigned int y = yMin; y < yMax; y += sub) {
+                for (unsigned int x = 0; x < image->width(); x += sub) {
+                        unsigned short val16 = image->pixelValue(x, y);
                         if (val16 < min) {
                                 min = val16;
                         }
@@ -58,7 +58,7 @@ int ImageStats::stats_CPU(const Image *image, u_int16_t &min, u_int16_t &max, u_
 }
 
 
-// int ImageStats::stats_OpenCV_resize(u_int16_t &min, u_int16_t &max, u_int16_t &mean, u_int8_t sub) const
+// int ImageStats::stats_OpenCV_resize(unsigned short &min, unsigned short &max, unsigned short &mean, unsigned char sub) const
 // {
 // 	min = -1;
 // 	max = 0;
@@ -74,7 +74,7 @@ int ImageStats::stats_CPU(const Image *image, u_int16_t &min, u_int16_t &max, u_
 // 	return 0;
 // }
 
-// int ImageStats::stats_OpenCV_crop(u_int16_t &min, u_int16_t &max, u_int16_t &mean, u_int8_t sub) const
+// int ImageStats::stats_OpenCV_crop(unsigned short &min, unsigned short &max, unsigned short &mean, unsigned char sub) const
 // {
 // 	min = -1;
 // 	max = 0;
@@ -88,9 +88,9 @@ int ImageStats::stats_CPU(const Image *image, u_int16_t &min, u_int16_t &max, u_
 // 	return 0;
 // }
 
-int ImageStats::std(const Image *image, u_int16_t mean, float &std, u_int8_t sub)
+int ImageStats::std(const Image *image, unsigned short mean, float &std, unsigned char sub)
 {
-        int16_t dev;
+        short dev;
         int64_t sum = 0;
 
 #undef _OPENMP
@@ -98,19 +98,19 @@ int ImageStats::std(const Image *image, u_int16_t mean, float &std, u_int8_t sub
 #pragma omp parallel
                 {
         int threadId = omp_get_thread_num();
-        u_int32_t threadCount = omp_get_num_procs();
+        unsigned int threadCount = omp_get_num_procs();
         omp_set_num_threads(threadCount);
-        u_int32_t threadHeight = image->height()/threadCount;
-        u_int32_t yMin = threadId * threadHeight;
-        u_int32_t yMax = (threadId+1) * threadHeight;
-        u_int64_t lsum = 0;
+        unsigned int threadHeight = image->height()/threadCount;
+        unsigned int yMin = threadId * threadHeight;
+        unsigned int yMax = (threadId+1) * threadHeight;
+        unsigned long lsum = 0;
 #else
-        u_int32_t yMin = 0;
-        u_int32_t yMax = image->height();
+        unsigned int yMin = 0;
+        unsigned int yMax = image->height();
 #endif
-        for (u_int32_t y = yMin; y < yMax; y += sub) {
-                for (u_int32_t x = 0; x < image->width(); x += sub) {
-                        u_int16_t val16 = image->pixelValue(x, y);
+        for (unsigned int y = yMin; y < yMax; y += sub) {
+                for (unsigned int x = 0; x < image->width(); x += sub) {
+                        unsigned short val16 = image->pixelValue(x, y);
                         dev = val16 - mean;
 #if _OPENMP
                         lsum += dev * dev;
@@ -127,13 +127,13 @@ int ImageStats::std(const Image *image, u_int16_t mean, float &std, u_int8_t sub
         return 0;
 }
 
-int ImageStats::rowStats(const Image *image, u_int16_v &min, u_int16_v &max, u_int16_v &mean, u_int8_t sub)
+int ImageStats::rowStats(const Image *image, u_short_v &min, u_short_v &max, u_short_v &mean, unsigned char sub)
 {
-        int16_t dev = 0;
+        short dev = 0;
         int64_t sum = 0;
-        u_int16_t sumCount = 0;
-        u_int16_t count = image->height()/sub;
-        u_int16_t index = 0;
+        unsigned short sumCount = 0;
+        unsigned short count = image->height()/sub;
+        unsigned short index = 0;
         min.resize(count);
         max.resize(count);
         mean.resize(count);
@@ -143,22 +143,22 @@ int ImageStats::rowStats(const Image *image, u_int16_v &min, u_int16_v &max, u_i
 #pragma omp parallel
                 {
         int threadId = omp_get_thread_num();
-        u_int32_t threadCount = omp_get_num_procs();
+        unsigned int threadCount = omp_get_num_procs();
         omp_set_num_threads(threadCount);
-        u_int32_t threadHeight = image->height()/threadCount;
-        u_int32_t yMin = threadId * threadHeight;
-        u_int32_t yMax = (threadId+1) * threadHeight;
-        u_int64_t lsum = 0;
+        unsigned int threadHeight = image->height()/threadCount;
+        unsigned int yMin = threadId * threadHeight;
+        unsigned int yMax = (threadId+1) * threadHeight;
+        unsigned long lsum = 0;
 #else
-        u_int32_t yMin = 0;
-        u_int32_t yMax = image->height();
+        unsigned int yMin = 0;
+        unsigned int yMax = image->height();
 #endif
-        for (u_int32_t y = yMin; y < yMax; y += sub) {
+        for (unsigned int y = yMin; y < yMax; y += sub) {
                 sumCount = 0;
                 min[index] = -1;
                 max[index] = 0;
-                for (u_int32_t x = 0; x < image->width(); x += sub) {
-                        u_int16_t val16 = image->pixelValue(x, y);
+                for (unsigned int x = 0; x < image->width(); x += sub) {
+                        unsigned short val16 = image->pixelValue(x, y);
                         if (val16 < min[index]) {
                                 min[index] = val16;
                         }
@@ -176,7 +176,7 @@ int ImageStats::rowStats(const Image *image, u_int16_v &min, u_int16_v &max, u_i
                 mean[index] = lsum / sumCount;
                 lsum = 0;
 #else
-                u_int16_t meanValue = sum / sumCount;
+                unsigned short meanValue = sum / sumCount;
                 mean[index] = meanValue;
                 sum = 0;
 #endif          
@@ -185,14 +185,14 @@ int ImageStats::rowStats(const Image *image, u_int16_v &min, u_int16_v &max, u_i
         return 0;
 }
 
-int ImageStats::rowStd(const Image *image, const u_int16_v &mean, float_v &std, u_int8_t sub)
+int ImageStats::rowStd(const Image *image, const u_short_v &mean, float_v &std, unsigned char sub)
 {
-        int16_t dev = 0;
+        short dev = 0;
         int64_t sum = 0;
-        u_int16_t sumCount = 0;
+        unsigned short sumCount = 0;
         float stdValue = 0;
-        u_int16_t count = image->height()/sub;
-        u_int16_t index = 0;
+        unsigned short count = image->height()/sub;
+        unsigned short index = 0;
         std.resize(count);
 
 #undef _OPENMP
@@ -200,20 +200,20 @@ int ImageStats::rowStd(const Image *image, const u_int16_v &mean, float_v &std, 
 #pragma omp parallel
                 {
         int threadId = omp_get_thread_num();
-        u_int32_t threadCount = omp_get_num_procs();
+        unsigned int threadCount = omp_get_num_procs();
                 omp_set_num_threads(threadCount);
-                u_int32_t threadHeight = m_height/threadCount;
-        u_int32_t yMin = threadId * threadHeight;
-        u_int32_t yMax = (threadId+1) * threadHeight;
-        u_int64_t lsum = 0;
+                unsigned int threadHeight = m_height/threadCount;
+        unsigned int yMin = threadId * threadHeight;
+        unsigned int yMax = (threadId+1) * threadHeight;
+        unsigned long lsum = 0;
 #else
-        u_int32_t yMin = 0;
-        u_int32_t yMax = image->height();
+        unsigned int yMin = 0;
+        unsigned int yMax = image->height();
 #endif
-        for (u_int32_t y = yMin; y < yMax; y += sub) {
+        for (unsigned int y = yMin; y < yMax; y += sub) {
                 sumCount = 0;
-                for (u_int32_t x = 0; x < image->width(); x += sub) {
-                        u_int16_t val16 = image->pixelValue(x, y);
+                for (unsigned int x = 0; x < image->width(); x += sub) {
+                        unsigned short val16 = image->pixelValue(x, y);
                         dev = val16 - mean[index];
 #if _OPENMP
                         lsum += dev * dev;

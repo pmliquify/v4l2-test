@@ -74,22 +74,22 @@ void Socket::handleErrorForRecv(int err)
 
 struct ImageHeader
 {
-        u_int16_t width;
-        u_int16_t height;
-        u_int16_t bytesPerLine;
-        u_int32_t imageSize;
-        u_int32_t bytesUsed;
-        u_int32_t pixelformat;
-        u_int32_t sequence;
-        u_int64_t timestamp;
-        u_int8_t  numPlanes;
-        u_int16_t shift;
+        unsigned short width;
+        unsigned short height;
+        unsigned short bytesPerLine;
+        unsigned int imageSize;
+        unsigned int bytesUsed;
+        unsigned int pixelformat;
+        unsigned int sequence;
+        unsigned long timestamp;
+        unsigned char  numPlanes;
+        unsigned short shift;
 };
 
 struct ControlHeader
 {
-        u_int32_t id;
-        u_int64_t value;
+        unsigned int id;
+        unsigned long value;
 };
 
 
@@ -106,7 +106,7 @@ ImageSocketClient::~ImageSocketClient()
 
 }
 
-int ImageSocketClient::open(std::string address, u_int16_t port)
+int ImageSocketClient::open(std::string address, unsigned short port)
 {
         if (isConnected()) {
                 return -1;
@@ -134,7 +134,7 @@ int ImageSocketClient::open(std::string address, u_int16_t port)
         return 0;
 }
 
-int ImageSocketClient::receiveControl(u_int32_t &id, u_int64_t& value)
+int ImageSocketClient::receiveControl(unsigned int &id, unsigned long& value)
 {
         struct ControlHeader header;
         ssize_t size = receive(m_socket, (char *)&header, sizeof(header), MSG_PEEK | MSG_DONTWAIT);
@@ -171,18 +171,18 @@ int ImageSocketClient::sendImage(const Image *image)
         header.numPlanes = image->planes().size();
         header.shift = image->shift();
 
-        u_int32_t sendSize = sizeof(header);
+        unsigned int sendSize = sizeof(header);
         ssize_t size = send(m_socket, (const char *)&header, sendSize);
         if (size < 0) {
                 return -1;
         }
 
         sendSize = (image->bytesUsed() > 0) ? image->bytesUsed() : image->imageSize();
-        const u_int8_t * plane = image->plane(0);
+        const unsigned char * plane = image->plane(0);
         int index = 0;
         while (index < sendSize) {
-                const u_int8_t *data = plane + index;
-                u_int32_t remainingSize = sendSize - index;
+                const unsigned char *data = plane + index;
+                unsigned int remainingSize = sendSize - index;
                 size = send(m_socket, data, remainingSize);
                 if (size < 0) {
                         return -1;
@@ -211,7 +211,7 @@ ImageSocketServer::~ImageSocketServer()
         close();
 }
 
-int ImageSocketServer::listen(u_int16_t port)
+int ImageSocketServer::listen(unsigned short port)
 {
         if (m_listening) {
                 return -1;
@@ -260,7 +260,7 @@ int ImageSocketServer::close()
         return 0;
 }
 
-int ImageSocketServer::sendControl(u_int32_t id, u_int64_t value)
+int ImageSocketServer::sendControl(unsigned int id, unsigned long value)
 {
         if (!isConnected()) {
                 return -1;
@@ -296,16 +296,16 @@ int ImageSocketServer::receiveImage(Image *image)
                         image->planes().resize(header.numPlanes);
                         image->setImageSize(header.imageSize);
                         for (int index=0; index<image->planes().size(); index++) {
-                                image->planes()[index] = (u_int8_t *)malloc(image->imageSize());
+                                image->planes()[index] = (unsigned char *)malloc(image->imageSize());
                         }
                 }
 
-                u_int32_t receiveSize = (image->bytesUsed() > 0) ? image->bytesUsed() : image->imageSize();
-                u_int8_t *plane = (u_int8_t *)image->planes()[0];
+                unsigned int receiveSize = (image->bytesUsed() > 0) ? image->bytesUsed() : image->imageSize();
+                unsigned char *plane = (unsigned char *)image->planes()[0];
                 int index = 0;
                 while (index < receiveSize) {
-                        u_int8_t *data = plane + index;
-                        u_int32_t remainingSize = receiveSize - index;
+                        unsigned char *data = plane + index;
+                        unsigned int remainingSize = receiveSize - index;
                         size = receive(m_client, data, remainingSize, MSG_WAITALL);
                         if (size <= 0) {
                                 close();

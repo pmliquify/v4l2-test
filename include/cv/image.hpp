@@ -1,6 +1,5 @@
 #pragma once
 
-#include <sys/types.h>
 #include <vector>
 
 
@@ -9,38 +8,38 @@ class Image
 public:
         Image();
 
-        virtual u_int16_t pixelValue(u_int16_t x, u_int16_t y) const;
+        virtual unsigned short pixelValue(unsigned short x, unsigned short y) const;
 
-        virtual void init(u_int16_t width, u_int16_t height, u_int16_t bytesPerLine, u_int32_t imageSize,
-                u_int32_t bytesUsed, u_int32_t pixelformat, u_int32_t sequence, u_int64_t timestamp);
+        virtual void init(unsigned short width, unsigned short height, unsigned short bytesPerLine, unsigned int imageSize,
+                unsigned int bytesUsed, unsigned int pixelformat, unsigned int sequence, unsigned long timestamp);
 
-        u_int16_t width() const { return m_width; }
-        u_int16_t height() const { return m_height; }
-        u_int16_t bytesPerLine() const { return m_bytesPerLine; }
-        u_int32_t imageSize() const { return m_imageSize; }
-        void setImageSize(u_int32_t size) { m_imageSize = size; }
-        u_int32_t bytesUsed() const { return m_bytesUsed; }
-        u_int32_t pixelformat() const { return m_pixelformat; }
-        u_int32_t sequence() const { return m_sequence; }
-        u_int64_t timestamp() const { return m_timestamp; }
-        u_int16_t shift() const { return m_shift; }
-        void setShift(u_int16_t shift) { m_shift = shift; }
+        unsigned short width() const { return m_width; }
+        unsigned short height() const { return m_height; }
+        unsigned short bytesPerLine() const { return m_bytesPerLine; }
+        unsigned int imageSize() const { return m_imageSize; }
+        void setImageSize(unsigned int size) { m_imageSize = size; }
+        unsigned int bytesUsed() const { return m_bytesUsed; }
+        unsigned int pixelformat() const { return m_pixelformat; }
+        unsigned int sequence() const { return m_sequence; }
+        unsigned long timestamp() const { return m_timestamp; }
+        unsigned short shift() const { return m_shift; }
+        void setShift(unsigned short shift) { m_shift = shift; }
 
-        typedef std::vector<u_int8_t *> Planes;
+        typedef std::vector<unsigned char *> Planes;
         const Planes &planes() const { return m_planes; }
         Planes &planes() { return m_planes; }
-        const u_int8_t *plane(u_int8_t index) const { return m_planes[index]; }
+        const unsigned char *plane(unsigned char index) const { return m_planes[index]; }
 
 protected:
-        u_int16_t m_width;
-        u_int16_t m_height;
-        u_int16_t m_bytesPerLine;
-        u_int8_t  m_bytesPerPixel;
-        u_int32_t m_imageSize;
-        u_int32_t m_bytesUsed;
-        u_int32_t m_pixelformat;
-        u_int32_t m_sequence;
-        u_int64_t m_timestamp;
-        u_int16_t m_shift;
-        Planes    m_planes;
+        unsigned short m_width;
+        unsigned short m_height;
+        unsigned short m_bytesPerLine;
+        unsigned char  m_bytesPerPixel;
+        unsigned int   m_imageSize;
+        unsigned int   m_bytesUsed;
+        unsigned int   m_pixelformat;
+        unsigned int   m_sequence;
+        unsigned long  m_timestamp;
+        unsigned short m_shift;
+        Planes         m_planes;
 };

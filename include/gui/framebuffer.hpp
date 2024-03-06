@@ -1,6 +1,5 @@
 #pragma once
 
-#include <sys/types.h>
 #include <linux/fb.h>
 #include <cv/image.hpp>
 
@@ -24,7 +23,7 @@ private:
         struct fb_fix_screeninfo m_fixScreenInfo;
 
         void print08(const Image *image);
-        void print16(const Image *image, u_int8_t shift);
+        void print16(const Image *image, unsigned char shift);
 
         void handleErrorForOpen(const char *path, int err);
         void handleErrorForClose(int fd, int err);

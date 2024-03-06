@@ -34,8 +34,8 @@ int SocketClientRunner::run(ImageSource *imageSource)
 
 int SocketClientRunner::processImage(ImageSource *imageSource, Image *image)
 {
-        u_int32_t id;
-        u_int64_t value;
+        unsigned int id;
+        unsigned long value;
         while (m_socket.receiveControl(id, value) == 0) {
                 switch (id) {
                 case CID_EXPOSURE:

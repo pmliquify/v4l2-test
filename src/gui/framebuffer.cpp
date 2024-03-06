@@ -61,38 +61,38 @@ int FrameBuffer::close()
 
 void FrameBuffer::fill()
 {
-        u_int32_t width = m_varScreenInfo.xres;
-        u_int32_t height = m_varScreenInfo.yres;
-        u_int32_t bytesPerPixelFB = m_varScreenInfo.bits_per_pixel/8;
-        u_int8_t * ptrFB = (u_int8_t *)m_ptr;
+        unsigned int width = m_varScreenInfo.xres;
+        unsigned int height = m_varScreenInfo.yres;
+        unsigned int bytesPerPixelFB = m_varScreenInfo.bits_per_pixel/8;
+        unsigned char * ptrFB = (unsigned char *)m_ptr;
 
 #if _OPENMP        
-        u_int32_t threadCount = omp_get_num_procs();
+        unsigned int threadCount = omp_get_num_procs();
         omp_set_num_threads(threadCount);
-        u_int32_t threadHeight = height/threadCount;
+        unsigned int threadHeight = height/threadCount;
 
 #pragma omp parallel
         {
                 int threadId = omp_get_thread_num();
-                for (u_int32_t y = threadId*threadHeight; y < (threadId+1)*threadHeight; y++) {
+                for (unsigned int y = threadId*threadHeight; y < (threadId+1)*threadHeight; y++) {
 #else
-                for (u_int32_t y = 0; y < height; y++) {
+                for (unsigned int y = 0; y < height; y++) {
 #endif
-                        u_int32_t yOffsetPtrFB = m_varScreenInfo.xoffset * bytesPerPixelFB
+                        unsigned int yOffsetPtrFB = m_varScreenInfo.xoffset * bytesPerPixelFB
                                 + (y + m_varScreenInfo.yoffset) * m_fixScreenInfo.line_length;
                         
-                        u_int8_t pixelStep = 2;
+                        unsigned char pixelStep = 2;
                         
-                        for (u_int32_t x = 0; x < width; x+=pixelStep) {
-                                u_int32_t xOffsetPtrFB = x * bytesPerPixelFB;
-                                u_int8_t * pixelFB = ptrFB + yOffsetPtrFB + xOffsetPtrFB;
+                        for (unsigned int x = 0; x < width; x+=pixelStep) {
+                                unsigned int xOffsetPtrFB = x * bytesPerPixelFB;
+                                unsigned char * pixelFB = ptrFB + yOffsetPtrFB + xOffsetPtrFB;
 
                                 switch (bytesPerPixelFB) {
                                 default:
-                                        *((u_int64_t *)pixelFB) = 0x000000ff000000ff;
+                                        *((unsigned long *)pixelFB) = 0x000000ff000000ff;
                                         break;
                                 case 2:
-                                        *((u_int32_t *)pixelFB) = 0x001f001f;
+                                        *((unsigned int *)pixelFB) = 0x001f001f;
                                         break;
                                 }
                         }
@@ -133,52 +133,52 @@ void FrameBuffer::update(const Image *image)
 
 void FrameBuffer::print08(const Image *image)
 {
-        u_int32_t width = (image->width() < m_varScreenInfo.xres) ? image->width() : m_varScreenInfo.xres;
-        u_int32_t height = (image->height() < m_varScreenInfo.yres) ? image->height() : m_varScreenInfo.yres-1;
-        u_int32_t bytesPerPixelFB = m_varScreenInfo.bits_per_pixel/8;
-        u_int8_t *ptrFB = (u_int8_t *)m_ptr;
-        const u_int8_t *ptrImage = image->plane(0);
+        unsigned int width = (image->width() < m_varScreenInfo.xres) ? image->width() : m_varScreenInfo.xres;
+        unsigned int height = (image->height() < m_varScreenInfo.yres) ? image->height() : m_varScreenInfo.yres-1;
+        unsigned int bytesPerPixelFB = m_varScreenInfo.bits_per_pixel/8;
+        unsigned char *ptrFB = (unsigned char *)m_ptr;
+        const unsigned char *ptrImage = image->plane(0);
 
 #if _OPENMP
-        u_int32_t threadCount = omp_get_num_procs();
+        unsigned int threadCount = omp_get_num_procs();
         omp_set_num_threads(threadCount);
-        u_int32_t threadHeight = height/threadCount;
+        unsigned int threadHeight = height/threadCount;
 
         #pragma omp parallel
         {
                 int threadId = omp_get_thread_num();
-                for (u_int32_t y = threadId*threadHeight; y < (threadId+1)*threadHeight; y++) {
+                for (unsigned int y = threadId*threadHeight; y < (threadId+1)*threadHeight; y++) {
 #else
-                for (u_int32_t y = 0; y < height; y++) {
+                for (unsigned int y = 0; y < height; y++) {
 #endif
-                        u_int32_t yOffsetPtrFB = m_varScreenInfo.xoffset * bytesPerPixelFB
+                        unsigned int yOffsetPtrFB = m_varScreenInfo.xoffset * bytesPerPixelFB
                                 + (y + m_varScreenInfo.yoffset) * m_fixScreenInfo.line_length;
-                        u_int32_t YOffsetPtrImage = (y * image->bytesPerLine());
+                        unsigned int YOffsetPtrImage = (y * image->bytesPerLine());
 
-                        u_int32_t bytesPerPixelImage = 1;
-                        u_int8_t pixelStep = 8;
-                        u_int64_t grey1 = 0, grey2 = 0, grey3 = 0, grey4 = 0;
-                        u_int64_t grey5 = 0, grey6 = 0, grey7 = 0, grey8 = 0;
-                        u_int64_t pixel12 = 0, pixel34 = 0;
-                        u_int64_t pixel56 = 0, pixel78 = 0;
+                        unsigned int bytesPerPixelImage = 1;
+                        unsigned char pixelStep = 8;
+                        unsigned long grey1 = 0, grey2 = 0, grey3 = 0, grey4 = 0;
+                        unsigned long grey5 = 0, grey6 = 0, grey7 = 0, grey8 = 0;
+                        unsigned long pixel12 = 0, pixel34 = 0;
+                        unsigned long pixel56 = 0, pixel78 = 0;
 
                         // #pragma omp for
-                        for (u_int32_t x = 0; x < width; x+=pixelStep) {
-                                u_int32_t xOffsetPtrImage = x * bytesPerPixelImage;
-                                const u_int8_t * pixelImage = ptrImage + YOffsetPtrImage + xOffsetPtrImage;
-                                u_int32_t xOffsetPtrFB = x * bytesPerPixelFB;
-                                u_int8_t * pixelFB = ptrFB + yOffsetPtrFB + xOffsetPtrFB;
+                        for (unsigned int x = 0; x < width; x+=pixelStep) {
+                                unsigned int xOffsetPtrImage = x * bytesPerPixelImage;
+                                const unsigned char * pixelImage = ptrImage + YOffsetPtrImage + xOffsetPtrImage;
+                                unsigned int xOffsetPtrFB = x * bytesPerPixelFB;
+                                unsigned char * pixelFB = ptrFB + yOffsetPtrFB + xOffsetPtrFB;
 
-                                u_int64_t grey64 = *((u_int64_t *)pixelImage);
+                                unsigned long grey64 = *((unsigned long *)pixelImage);
 
-                                grey1 = *((u_int8_t *)&grey64 + 0);
-                                grey2 = *((u_int8_t *)&grey64 + 1);
-                                grey3 = *((u_int8_t *)&grey64 + 2);
-                                grey4 = *((u_int8_t *)&grey64 + 3);
-                                grey5 = *((u_int8_t *)&grey64 + 4);
-                                grey6 = *((u_int8_t *)&grey64 + 5);
-                                grey7 = *((u_int8_t *)&grey64 + 6);
-                                grey8 = *((u_int8_t *)&grey64 + 7);
+                                grey1 = *((unsigned char *)&grey64 + 0);
+                                grey2 = *((unsigned char *)&grey64 + 1);
+                                grey3 = *((unsigned char *)&grey64 + 2);
+                                grey4 = *((unsigned char *)&grey64 + 3);
+                                grey5 = *((unsigned char *)&grey64 + 4);
+                                grey6 = *((unsigned char *)&grey64 + 5);
+                                grey7 = *((unsigned char *)&grey64 + 6);
+                                grey8 = *((unsigned char *)&grey64 + 7);
 
                                 pixel12 = (grey2 << 48) | (grey2 << 40) | (grey2 << 32) |
                                          (grey1 << 16) | (grey1 <<  8) | (grey1 <<  0);
@@ -189,10 +189,10 @@ void FrameBuffer::print08(const Image *image)
                                 pixel78 = (grey8 << 48) | (grey8 << 40) | (grey8 << 32) |
                                         (grey7 << 16) | (grey7 <<  8) | (grey7 <<  0);
 
-                                *((u_int64_t *)(pixelFB +  0)) = pixel12;
-                                *((u_int64_t *)(pixelFB +  8)) = pixel34;
-                                *((u_int64_t *)(pixelFB + 16)) = pixel56;
-                                *((u_int64_t *)(pixelFB + 24)) = pixel78;
+                                *((unsigned long *)(pixelFB +  0)) = pixel12;
+                                *((unsigned long *)(pixelFB +  8)) = pixel34;
+                                *((unsigned long *)(pixelFB + 16)) = pixel56;
+                                *((unsigned long *)(pixelFB + 24)) = pixel78;
                         }
                 }
 #if _OPENMP
@@ -200,51 +200,51 @@ void FrameBuffer::print08(const Image *image)
 #endif
 }
 
-void FrameBuffer::print16(const Image *image, u_int8_t shift)
+void FrameBuffer::print16(const Image *image, unsigned char shift)
 {
-        u_int32_t width = (image->width() < m_varScreenInfo.xres) ? image->width() : m_varScreenInfo.xres;
-        u_int32_t height = (image->height() < m_varScreenInfo.yres) ? image->height() : m_varScreenInfo.yres;
-        u_int32_t bytesPerPixelFB = m_varScreenInfo.bits_per_pixel/8;
-        u_int8_t * ptrFB = (u_int8_t *)m_ptr;
-        const u_int8_t *ptrImage = image->planes()[0];
+        unsigned int width = (image->width() < m_varScreenInfo.xres) ? image->width() : m_varScreenInfo.xres;
+        unsigned int height = (image->height() < m_varScreenInfo.yres) ? image->height() : m_varScreenInfo.yres;
+        unsigned int bytesPerPixelFB = m_varScreenInfo.bits_per_pixel/8;
+        unsigned char * ptrFB = (unsigned char *)m_ptr;
+        const unsigned char *ptrImage = image->planes()[0];
 
 #if _OPENMP
-        u_int32_t threadCount = omp_get_num_procs();
+        unsigned int threadCount = omp_get_num_procs();
         omp_set_num_threads(threadCount);
-        u_int32_t threadHeight = height/threadCount;
+        unsigned int threadHeight = height/threadCount;
 
         #pragma omp parallel
         {
                 int threadId = omp_get_thread_num();
-                for (u_int32_t y = threadId*threadHeight; y < (threadId+1)*threadHeight; y++) {
+                for (unsigned int y = threadId*threadHeight; y < (threadId+1)*threadHeight; y++) {
 #else
-                for (u_int32_t y = 0; y < height; y++) {
+                for (unsigned int y = 0; y < height; y++) {
 #endif
-                        u_int32_t yOffsetPtrFB = m_varScreenInfo.xoffset * bytesPerPixelFB
+                        unsigned int yOffsetPtrFB = m_varScreenInfo.xoffset * bytesPerPixelFB
                                 + (y + m_varScreenInfo.yoffset) * m_fixScreenInfo.line_length;
-                        u_int32_t YOffsetPtrImage = (y * image->bytesPerLine());
+                        unsigned int YOffsetPtrImage = (y * image->bytesPerLine());
 
-                        u_int32_t bytesPerPixelImage = 2;
-                        u_int8_t pixelStep = 4;
-                        u_int64_t grey1 = 0, grey2 = 0, grey3 = 0, grey4 = 0;
-                        u_int8_t pixelValue = 0;
+                        unsigned int bytesPerPixelImage = 2;
+                        unsigned char pixelStep = 4;
+                        unsigned long grey1 = 0, grey2 = 0, grey3 = 0, grey4 = 0;
+                        unsigned char pixelValue = 0;
 
                         // #pragma omp for
-                        for (u_int32_t x = 0; x < width; x+=pixelStep) {
-                                u_int32_t xOffsetPtrImage = x * bytesPerPixelImage;
-                                const u_int8_t * pixelImage = ptrImage + YOffsetPtrImage + xOffsetPtrImage;
-                                u_int32_t xOffsetPtrFB = x * bytesPerPixelFB;
-                                u_int8_t * pixelFB = ptrFB + yOffsetPtrFB + xOffsetPtrFB;
-                                u_int64_t pixel64_12 = 0, pixel64_34 = 0;
-                                u_int32_t pixel32_12 = 0, pixel32_34 = 0;
+                        for (unsigned int x = 0; x < width; x+=pixelStep) {
+                                unsigned int xOffsetPtrImage = x * bytesPerPixelImage;
+                                const unsigned char * pixelImage = ptrImage + YOffsetPtrImage + xOffsetPtrImage;
+                                unsigned int xOffsetPtrFB = x * bytesPerPixelFB;
+                                unsigned char * pixelFB = ptrFB + yOffsetPtrFB + xOffsetPtrFB;
+                                unsigned long pixel64_12 = 0, pixel64_34 = 0;
+                                unsigned int pixel32_12 = 0, pixel32_34 = 0;
 
-                                u_int64_t grey64 = *((u_int64_t *)pixelImage);
+                                unsigned long grey64 = *((unsigned long *)pixelImage);
                                 grey64 = grey64 >> shift;
 
-                                grey1 = *((u_int8_t *)&grey64 + 0);
-                                grey2 = *((u_int8_t *)&grey64 + 2);
-                                grey3 = *((u_int8_t *)&grey64 + 4);
-                                grey4 = *((u_int8_t *)&grey64 + 6);
+                                grey1 = *((unsigned char *)&grey64 + 0);
+                                grey2 = *((unsigned char *)&grey64 + 2);
+                                grey3 = *((unsigned char *)&grey64 + 4);
+                                grey4 = *((unsigned char *)&grey64 + 6);
 
                                 switch (bytesPerPixelFB) {
                                 default:
@@ -254,8 +254,8 @@ void FrameBuffer::print16(const Image *image, u_int8_t shift)
                                         pixel64_34 = (grey4 << 48) | (grey4 << 40) | (grey4 << 32) |
                                                 (grey3 << 16) | (grey3 <<  8) | (grey3 <<  0);
 
-                                        *((u_int64_t *)(pixelFB + 0)) = pixel64_12;
-                                        *((u_int64_t *)(pixelFB + 8)) = pixel64_34;
+                                        *((unsigned long *)(pixelFB + 0)) = pixel64_12;
+                                        *((unsigned long *)(pixelFB + 8)) = pixel64_34;
                                         break;
                                 case 2:
                                         grey1 = (grey1 >> 3);
@@ -268,8 +268,8 @@ void FrameBuffer::print16(const Image *image, u_int8_t shift)
                                         pixel32_34 =  (grey4 << 27) | (grey4 << 22) | (grey4 << 16) |
                                                 (grey3 << 11) | (grey3 <<  6) | (grey3 <<  0);;
 
-                                        *((u_int32_t *)(pixelFB + 0)) = pixel32_12;
-                                        *((u_int32_t *)(pixelFB + 4)) = pixel32_34;
+                                        *((unsigned int *)(pixelFB + 0)) = pixel32_12;
+                                        *((unsigned int *)(pixelFB + 4)) = pixel32_34;
                                         break;
                                 }
                         }
@@ -321,11 +321,11 @@ void FrameBuffer::handleErrorForIoctl(unsigned long int request, int err)
 // White: 237, 236, 237
 
 // float RedScale = 1.0, GreenScale = 1.0, BlueScale = 1.0;
-// u_int64_t AvgRed = 0, AvgGreen = 0, AvgBlue = 0;
+// unsigned long AvgRed = 0, AvgGreen = 0, AvgBlue = 0;
 // unsigned short ScaledGrey = 0;
-// u_int32_t Pixel = 0;
-// u_int8_t YSelect = y%2;
-// u_int8_t XSelect = x%2;
+// unsigned int Pixel = 0;
+// unsigned char YSelect = y%2;
+// unsigned char XSelect = x%2;
 // if (YSelect == 0) {
 //         if (XSelect == 0) {     // Red
 //                 ScaledGrey = Grey / RedScale;

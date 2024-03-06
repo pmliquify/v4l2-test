@@ -303,7 +303,7 @@ Image *V4L2ImageSource::getNextImage(int timeout, bool lastImage)
         }
 
         m_image->setBufferIndex(m_nextBufferIndex);
-        u_int64_t timestamp = buffer->timestamp.tv_sec*1e3 + buffer->timestamp.tv_usec/1e3;
+        unsigned long timestamp = buffer->timestamp.tv_sec*1e3 + buffer->timestamp.tv_usec/1e3;
 
         switch (m_format.type) {
         case V4L2_BUF_TYPE_VIDEO_CAPTURE:
@@ -467,7 +467,7 @@ int V4L2ImageSource::initBuffers(int bufferCount)
                 memset(buffer, 0, sizeof(struct v4l2_buffer));
                 switch (m_format.type) {
                 case V4L2_BUF_TYPE_VIDEO_CAPTURE:        
-                        m_buffers[bufferIndex].ptrs = (u_int8_t **)malloc(sizeof(void *));
+                        m_buffers[bufferIndex].ptrs = (unsigned char **)malloc(sizeof(void *));
                         m_buffers[bufferIndex].ptrs[0] = NULL;
                         break;
 
@@ -475,7 +475,7 @@ int V4L2ImageSource::initBuffers(int bufferCount)
                         buffer->length = planeCount;
                         buffer->m.planes = (struct v4l2_plane *)malloc(buffer->length*sizeof(struct v4l2_plane));
                         memset(buffer->m.planes, 0, buffer->length*sizeof(struct v4l2_plane));
-                        m_buffers[bufferIndex].ptrs = (u_int8_t **)malloc(buffer->length*sizeof(void *));
+                        m_buffers[bufferIndex].ptrs = (unsigned char **)malloc(buffer->length*sizeof(void *));
                         memset(m_buffers[bufferIndex].ptrs, 0, buffer->length*sizeof(void *));
                         break;
                 }
@@ -494,8 +494,8 @@ int V4L2ImageSource::initBuffers(int bufferCount)
                 switch (m_format.type) {
                 case V4L2_BUF_TYPE_VIDEO_CAPTURE:
                         {
-                                u_int8_t *ptr = NULL;
-                                ptr = (u_int8_t *)mmap(NULL, buffer->length, PROT_READ | PROT_WRITE, 
+                                unsigned char *ptr = NULL;
+                                ptr = (unsigned char *)mmap(NULL, buffer->length, PROT_READ | PROT_WRITE, 
                                         MAP_SHARED, m_deviceFd, buffer->m.offset);
                                 if (ptr == MAP_FAILED) {
                                         return -1;
@@ -507,8 +507,8 @@ int V4L2ImageSource::initBuffers(int bufferCount)
                 case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
                         for (int planeIndex = 0; planeIndex < planeCount; planeIndex++) {
                                 struct v4l2_plane *plane = &buffer->m.planes[planeIndex];
-                                u_int8_t *ptr = NULL;
-                                ptr = (u_int8_t *)mmap(NULL, plane->length, PROT_READ | PROT_WRITE,
+                                unsigned char *ptr = NULL;
+                                ptr = (unsigned char *)mmap(NULL, plane->length, PROT_READ | PROT_WRITE,
                                         MAP_SHARED, m_deviceFd, plane->m.mem_offset);
                                 if (ptr == MAP_FAILED) {
                                         return -1;

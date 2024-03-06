@@ -11,14 +11,14 @@ public:
 
         void setActive(bool active) { m_active = active; }
         void setTest(bool test) { m_test = test; }
-        void setSub(u_int16_t sub) { m_sub = sub; }
-        void setP(u_int16_t p) { m_p = p; }
-        void setD(u_int16_t d) { m_d = d; }
-        void setTarget(u_int16_t target) { m_target = target;}
-        void setExposureMin(u_int32_t exposure) { m_exposureMin = exposure; }
-        void setExposureMax(u_int32_t exposure) { m_exposureMax = exposure; }
+        void setSub(unsigned short sub) { m_sub = sub; }
+        void setP(unsigned short p) { m_p = p; }
+        void setD(unsigned short d) { m_d = d; }
+        void setTarget(unsigned short target) { m_target = target;}
+        void setExposureMin(unsigned int exposure) { m_exposureMin = exposure; }
+        void setExposureMax(unsigned int exposure) { m_exposureMax = exposure; }
         
-        int init(u_int32_t exposure);
+        int init(unsigned int exposure);
         int run(ImageSource *imageSource, Image *image);
 
 private:
@@ -32,22 +32,22 @@ private:
 
         bool m_active;
         bool m_test;
-        u_int16_t m_sub;
-        u_int16_t m_p;
-        u_int16_t m_d;
-        u_int16_t m_target;
-        u_int32_t m_exposureMin;
-        u_int32_t m_exposureMax;
+        unsigned short m_sub;
+        unsigned short m_p;
+        unsigned short m_d;
+        unsigned short m_target;
+        unsigned int m_exposureMin;
+        unsigned int m_exposureMax;
 
         ImageSource *m_imageSource;
-        u_int32_t m_exposure;
-        u_int16_t m_meanLast;
+        unsigned int m_exposure;
+        unsigned short m_meanLast;
         TestState m_testState;
-        u_int16_t m_initCount;
-        u_int16_t m_testCount;
-        u_int16_t m_measureCount;
-        u_int16_t m_meanMin;
-        u_int16_t m_meanMax;
+        unsigned short m_initCount;
+        unsigned short m_testCount;
+        unsigned short m_measureCount;
+        unsigned short m_meanMin;
+        unsigned short m_meanMax;
         float m_latency;
 
         int calculateExposure(ImageSource *imageSource, Image *image);

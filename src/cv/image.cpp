@@ -14,8 +14,8 @@ Image::Image() :
 {
 }
 
-void Image::init(u_int16_t width, u_int16_t height, u_int16_t bytesPerLine, u_int32_t imageSize,
-                u_int32_t bytesUsed, u_int32_t pixelformat, u_int32_t sequence, u_int64_t timestamp)
+void Image::init(unsigned short width, unsigned short height, unsigned short bytesPerLine, unsigned int imageSize,
+                unsigned int bytesUsed, unsigned int pixelformat, unsigned int sequence, unsigned long timestamp)
 {
         m_width = width;
         m_height = height;
@@ -48,12 +48,12 @@ void Image::init(u_int16_t width, u_int16_t height, u_int16_t bytesPerLine, u_in
         }
 }
 
-u_int16_t Image::pixelValue(u_int16_t x, u_int16_t y) const
+unsigned short Image::pixelValue(unsigned short x, unsigned short y) const
 {
-        const u_int8_t *data = plane(0);
-        u_int32_t index = y*m_bytesPerLine + x*m_bytesPerPixel;
-        const u_int8_t *pixel = data + index;
-        u_int16_t val16 = 0;
+        const unsigned char *data = plane(0);
+        unsigned int index = y*m_bytesPerLine + x*m_bytesPerPixel;
+        const unsigned char *pixel = data + index;
+        unsigned short val16 = 0;
 
         switch (m_pixelformat) {
         case V4L2_PIX_FMT_GREY:
@@ -61,7 +61,7 @@ u_int16_t Image::pixelValue(u_int16_t x, u_int16_t y) const
         case V4L2_PIX_FMT_SGBRG8:
         case V4L2_PIX_FMT_SGRBG8:
         case V4L2_PIX_FMT_SBGGR8: 
-                val16 = (*(u_int8_t*)pixel);
+                val16 = (*(unsigned char*)pixel);
                 break;
         case V4L2_PIX_FMT_Y10:
         case V4L2_PIX_FMT_SRGGB10:
@@ -73,7 +73,7 @@ u_int16_t Image::pixelValue(u_int16_t x, u_int16_t y) const
         case V4L2_PIX_FMT_SGBRG12:
         case V4L2_PIX_FMT_SGRBG12:
         case V4L2_PIX_FMT_SBGGR12:
-                val16 = (*(u_int16_t*)pixel);
+                val16 = (*(unsigned short*)pixel);
         }
         val16 = val16 >> m_shift;
         return val16;

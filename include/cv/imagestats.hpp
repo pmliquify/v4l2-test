@@ -7,16 +7,16 @@
 class ImageStats
 {
 public:
-    typedef std::vector<u_int16_t> u_int16_v;
+    typedef std::vector<unsigned short> u_short_v;
     typedef std::vector<float> float_v;
 
-    static int stats(const Image *image, u_int16_t &min, u_int16_t &max, u_int16_t &mean, u_int8_t sub);
-    static int std(const Image *image, u_int16_t mean, float &std, u_int8_t sub);
-    static int rowStats(const Image *image, u_int16_v &min, u_int16_v &max, u_int16_v &mean, u_int8_t sub);
-    static int rowStd(const Image *image, const u_int16_v &min, float_v &std, u_int8_t sub);
+    static int stats(const Image *image, unsigned short &min, unsigned short &max, unsigned short &mean, unsigned char sub);
+    static int std(const Image *image, unsigned short mean, float &std, unsigned char sub);
+    static int rowStats(const Image *image, u_short_v &min, u_short_v &max, u_short_v &mean, unsigned char sub);
+    static int rowStd(const Image *image, const u_short_v &min, float_v &std, unsigned char sub);
 
 private:
-    static int stats_CPU(const Image *image, u_int16_t &min, u_int16_t &max, u_int16_t &mean, u_int8_t sub);
-    static int stats_OpenCV_resize(const Image *image, u_int16_t &min, u_int16_t &max, u_int16_t &mean, u_int8_t sub);
-    static int stats_OpenCV_crop(const Image *image, u_int16_t &min, u_int16_t &max, u_int16_t &mean, u_int8_t sub);
+    static int stats_CPU(const Image *image, unsigned short &min, unsigned short &max, unsigned short &mean, unsigned char sub);
+    static int stats_OpenCV_resize(const Image *image, unsigned short &min, unsigned short &max, unsigned short &mean, unsigned char sub);
+    static int stats_OpenCV_crop(const Image *image, unsigned short &min, unsigned short &max, unsigned short &mean, unsigned char sub);
 };

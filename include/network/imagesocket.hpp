@@ -31,9 +31,9 @@ public:
         ImageSocketClient();
         ~ImageSocketClient();
 
-        int open(std::string address, u_int16_t port);
+        int open(std::string address, unsigned short port);
 
-        int receiveControl(u_int32_t &id, u_int64_t& value);
+        int receiveControl(unsigned int &id, unsigned long& value);
         int sendImage(const Image *image);
 };
 
@@ -43,11 +43,11 @@ public:
         ImageSocketServer();
         ~ImageSocketServer();
 
-        int listen(u_int16_t port);
+        int listen(unsigned short port);
         int accept();
         int close();
         
-        int sendControl(u_int32_t id, u_int64_t value);
+        int sendControl(unsigned int id, unsigned long value);
         int receiveImage(Image *image);
 
 private:

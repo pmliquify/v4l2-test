@@ -48,12 +48,12 @@ private:
         struct v4l2_format m_format;
         struct Buffer {
                 struct v4l2_buffer buffer;
-                u_int8_t **ptrs;
+                unsigned char **ptrs;
         } *m_buffers;
 
         V4L2Image *m_image;
-        u_int32_t m_bufferCount;
-        u_int32_t m_nextBufferIndex;
+        unsigned int m_bufferCount;
+        unsigned int m_nextBufferIndex;
 
         int initBuffers(int count);
         void clearBuffers();

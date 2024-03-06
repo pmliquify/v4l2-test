@@ -61,8 +61,8 @@ float dBtoFactor(float dB)
 }
 
 Image *NoiseTestRunner::measureStats(ImageSource *imageSource, int exposure, int gain, 
-        u_int16_t &minValue, u_int16_t &maxValue, u_int16_t &meanValue, float &stdValue, 
-        float &slopeValue, u_int16_t &maxValueLimit)
+        unsigned short &minValue, unsigned short &maxValue, unsigned short &meanValue, float &stdValue, 
+        float &slopeValue, unsigned short &maxValueLimit)
 {
         imageSource->setBlackLevel(0);
         imageSource->setExposure(exposure);
@@ -84,8 +84,8 @@ Image *NoiseTestRunner::measureStats(ImageSource *imageSource, int exposure, int
                 file.open(fileName);
         }
 
-        u_int16_t x = image->width()/2;
-        std::vector<u_int16_t> min, max, mean;
+        unsigned short x = image->width()/2;
+        std::vector<unsigned short> min, max, mean;
         std::vector<float> std;
         ImageStats::rowStats(image, min, max, mean, m_subSampling);
         ImageStats::rowStd(image, mean, std, m_subSampling);
@@ -94,8 +94,8 @@ Image *NoiseTestRunner::measureStats(ImageSource *imageSource, int exposure, int
         maxValue = 0;
         meanValue = 0;
         stdValue = 0;
-        u_int64_t meanSum = 0;
-        for (u_int16_t index = 0; index < mean.size(); index++) {
+        unsigned long meanSum = 0;
+        for (unsigned short index = 0; index < mean.size(); index++) {
                 if (m_writeRowStats) {
                         file << index*m_subSampling << ";" << min[index] << ";" << max[index] << ";"
                                 << mean[index] << ";" << std[index] << std::endl;
@@ -112,7 +112,7 @@ Image *NoiseTestRunner::measureStats(ImageSource *imageSource, int exposure, int
         }
         meanValue = meanSum / mean.size();
         stdValue /= mean.size();
-        u_int16_t height = (image->height()/m_subSampling)*m_subSampling;
+        unsigned short height = (image->height()/m_subSampling)*m_subSampling;
         slopeValue = (float)(mean[mean.size()] - mean[0])/height;
 
         if (m_writeRowStats) {
@@ -185,12 +185,12 @@ int NoiseTestRunner::measureNoise(ImageSource *imageSource)
                 fileStd << exposure;
                 fileSlope << exposure;
                 for (int gain=m_gainStart; gain<=m_gainEnd; gain+=m_gainStep) {
-                        u_int16_t minValue = 0;
-                        u_int16_t maxValue = 0;
-                        u_int16_t meanValue = 0;
+                        unsigned short minValue = 0;
+                        unsigned short maxValue = 0;
+                        unsigned short meanValue = 0;
                         float stdValue = 0.0;
                         float slopeValue = 0.0;
-                        u_int16_t maxValueLimit = 0;
+                        unsigned short maxValueLimit = 0;
                         Image *image = measureStats(imageSource, exposure, gain, 
                                 minValue, maxValue, meanValue, stdValue, slopeValue, maxValueLimit);
                         
