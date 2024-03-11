@@ -1,4 +1,4 @@
-@startuml "V4L2Test Classes"
+@startuml "V4L2Test Core"
 
 package "cv" {
     class Image
@@ -63,6 +63,7 @@ V4L2Image <.. V4L2ImageSource
 ImageSourceRunner <|-- NoiseTestRunner
 ImageSourceRunner <|-- BasicStreamRunner
 BasicStreamRunner <|-- StreamRunner
+BasicStreamRunner <|-- SocketClientRunner
 BasicStreamRunner <|-- IspRunner
 
 AutoExposure <.. IspRunner
@@ -77,6 +78,7 @@ AutoExposure <.. IspRunner
 ' Socket <|-- ImageSocketServer
 ' ImageSocketServer <.. SocketServerSource
 ' ImageSocketClient <.. SocketClientRunner
-' BasicStreamRunner <|-- SocketClientRunner
+
+SocketClientRunner -- SocketServerSource
 
 @enduml
