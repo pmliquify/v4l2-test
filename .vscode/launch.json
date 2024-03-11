@@ -31,10 +31,10 @@
                         // "miDebuggerServerAddress": "nvidia:2000"
                 },
                 {
-                        "name": "Launch x86-64",
+                        "name": "Launch generic",
                         "type": "cppdbg",
                         "request": "launch",
-                        "program": "${workspaceFolder}/build_x86/v4l2-test",
+                        "program": "${workspaceFolder}/build_generic/v4l2-test",
                         "args": [ "server", "stream", "--gui"],
                         "stopAtEntry": false,
                         "cwd": "${fileDirname}",
