@@ -59,3 +59,13 @@ int SocketServerSource::setGain(int gain)
 {
         return m_socket.sendControl(CID_GAIN, gain); 
 }
+
+int SocketServerSource::setBlackLevel(int blackLevel) 
+{ 
+        return m_socket.sendControl(CID_BLACKLEVEL, blackLevel);; 
+}
+
+int SocketServerSource::setFrameRate(int frameRate) 
+{ 
+        return m_socket.sendControl(CID_FRAMERATE, frameRate);; 
+}

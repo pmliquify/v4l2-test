@@ -44,6 +44,12 @@ int SocketClientRunner::processImage(ImageSource *imageSource, Image *image)
                 case CID_GAIN:
                         imageSource->setGain(value);
                         break;
+                case CID_BLACKLEVEL:
+                        imageSource->setBlackLevel(value);
+                        break;
+                case CID_FRAMERATE:
+                        imageSource->setFrameRate(value);
+                        break;
                 }
         }
 

@@ -6,6 +6,8 @@
 
 #define CID_EXPOSURE    1
 #define CID_GAIN        2
+#define CID_BLACKLEVEL  3
+#define CID_FRAMERATE   4
 
 class Socket
 {

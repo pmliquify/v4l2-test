@@ -17,6 +17,8 @@ public:
 
         virtual int setGain(int gain);
         virtual int setExposure(int exposure);
+        virtual int setBlackLevel(int blackLevel);
+        virtual int setFrameRate(int frameRate);
 
 private:
         ImageSocketServer m_socket;
