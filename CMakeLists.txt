@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.5.0)
 
-project(V4L2Test VERSION 0.3.0)
+project(V4L2Test 
+        VERSION 0.3.0
+        DESCRIPTION "V4L2 testing application"
+        HOMEPAGE_URL "https://github.com/pmliquify/v4l2-test"
+        LANGUAGES CXX)
 configure_file (
     "${PROJECT_SOURCE_DIR}/include/version.h.in"
     "${PROJECT_BINARY_DIR}/include/version.h"
