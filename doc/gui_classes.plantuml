@@ -1,0 +1,36 @@
+@startuml "V4L2Test Core"
+
+package "gui" {
+    package "opencv" {
+        class Text {
+            + void draw(Mat img, Scalar color)
+        }
+        class MouseEvent
+        class Control {
+            + void draw(Mat img)
+            + void onMouse(const MouseEvent& event)
+        }
+        class Button {
+            + void draw(Mat img)
+            + void onMouse(const MouseEvent& event)
+        }
+        class Window {
+            + void show(Mat img)
+            # void onMouse(const MouseEvent &event)
+            # void update(const Mat img)
+        }
+        class MainWindow
+        class CCMWindow
+        class Viewer
+    }
+}
+
+Text *-- Control
+Control *-- Window
+Text *-- Button
+Button *-- Window
+MouseEvent *-- Window
+Window <|-- MainWindow
+Window <|-- CCMWindow
+MainWindow *-- Viewer
+CCMWindow *-- Viewer

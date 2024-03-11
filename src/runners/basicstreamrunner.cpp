@@ -69,7 +69,7 @@ int BasicStreamRunner::processImage(ImageSource *imageSource, Image *image)
         }
 
         if (m_gui) {
-                m_viewer.update(image);
+                m_viewer.show(image);
         }
 
         return 0;
@@ -83,7 +83,7 @@ int BasicStreamRunner::run(ImageSource *imageSource)
         }
 
         if (m_gui) {
-                m_viewer.show(imageSource);
+                m_viewer.init(imageSource);
         }
 
         if (m_width > 0 || m_height > 0) {

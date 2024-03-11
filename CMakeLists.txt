@@ -69,7 +69,17 @@ add_library(gui
 target_include_directories(gui PUBLIC include)
 target_link_libraries(gui PRIVATE cv sources)
 if (OPENCV_FOUND)
-        target_sources(gui PRIVATE src/gui/opencv/viewer.cpp)
+        target_sources(gui PRIVATE 
+                src/gui/opencv/viewer.cpp
+                src/gui/opencv/convert.cpp
+                src/gui/opencv/draw.cpp
+                src/gui/opencv/text.cpp
+                src/gui/opencv/mouseevent.cpp
+                src/gui/opencv/control.cpp
+                src/gui/opencv/button.cpp
+                src/gui/opencv/window.cpp
+                src/gui/opencv/mainwindow.cpp
+                src/gui/opencv/ccmwindow.cpp)
         target_link_libraries(gui PUBLIC ${OpenCV_LIBS})
 else()
         target_sources(gui PRIVATE src/gui/viewer.cpp)
