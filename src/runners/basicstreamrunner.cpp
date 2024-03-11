@@ -65,7 +65,7 @@ int BasicStreamRunner::processImage(ImageSource *imageSource, Image *image)
         }
 
         if (m_fb) {
-                m_frameBuffer.update(image);
+                m_frameBuffer.show(image);
         }
 
         if (m_gui) {
