@@ -1,5 +1,7 @@
 #include "ccmwindow.hpp"
+#ifdef WITH_CCM
 #include <opencv2/mcc.hpp>
+#endif
 #include "draw.hpp"
 
 #define CTL_SPACE       "Color Space"
@@ -16,6 +18,7 @@
 CCMWindow::CCMWindow(const char *name) :
         Window(name)
 {
+#ifdef WITH_CCM
         DescriptionMap spaces {
                 { ccm::COLOR_SPACE_sRGB,               "COLOR_SPACE_sRGB                " },
                 // { ccm::COLOR_SPACE_sRGBL,              "COLOR_SPACE_sRGBL               " },
@@ -89,6 +92,7 @@ CCMWindow::CCMWindow(const char *name) :
 
         addButton(new Button(BTN_ACTIVE, -1, 1));
         addButton(new Button(BTN_COLORS, -1, 2));
+#endif
 }
 
 void CCMWindow::show(Mat img)
@@ -103,6 +107,8 @@ void CCMWindow::show(Mat img)
 
         Mat imageBGR = img;
         Mat imageShow = imageBGR;
+
+#ifdef WITH_CCM
 
         Ptr<mcc::CCheckerDetector> detector = mcc::CCheckerDetector::create();
         if (detector->process(imageBGR, mcc::MCC24)) {
@@ -151,7 +157,7 @@ void CCMWindow::show(Mat img)
                         Ptr<mcc::CCheckerDraw> checkerDraw = mcc::CCheckerDraw::create(checker);
                         checkerDraw->draw(imageBGR_calib);
 
-                        Button *colorsButton = button("Show colors");
+                        Button *colorsButton = button(BTN_COLORS);
                         assert(colorsButton != NULL);
                         if (colorsButton->pressed()) {
                                 Mat channels[3];
@@ -166,6 +172,7 @@ void CCMWindow::show(Mat img)
                         imageShow = imageBGR_calib;
                 }
         }
+#endif
 
         Window::show(imageShow);
 }

@@ -15,11 +15,12 @@ configure_file (
 
 find_package(OpenMP)
 
-# set(OpenCV_DIR ~/libs/opencv/4.6.0/lib/cmake/opencv4)
-# find_package(OpenCV 4.1.1 REQUIRED)
-# if (OPENCV_FOUND)
-#         include_directories(${OpenCV_INCLUDE_DIRS})
-# endif()
+find_package(OpenCV 4.6.0)
+if (OPENCV_FOUND)
+        add_compile_definitions(WITH_GUI)
+        # add_compile_definitions(WITH_CCM)
+        include_directories(${OpenCV_INCLUDE_DIRS})
+endif()
 
 # --- Librarys ----------------------------------------------------------------
 
@@ -81,8 +82,6 @@ if (OPENCV_FOUND)
                 src/gui/opencv/mainwindow.cpp
                 src/gui/opencv/ccmwindow.cpp)
         target_link_libraries(gui PUBLIC ${OpenCV_LIBS})
-else()
-        target_sources(gui PRIVATE src/gui/viewer.cpp)
 endif()
 
 # Library runner

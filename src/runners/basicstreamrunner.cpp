@@ -7,7 +7,9 @@ BasicStreamRunner::BasicStreamRunner() :
         m_print(16),
         m_lastTimestamp(0),
         m_fb(false),
+#ifdef WITH_GUI
         m_gui(false),
+#endif
         m_delay(0),
         m_x(-1),
         m_y(-1),
@@ -22,7 +24,9 @@ void BasicStreamRunner::printArgs()
 {
         printArg("-p",  "Print image data in format (1: bin, 10: dec, 16: hex)");
         printArg("--fb","Output the image to the framebuffer");
+#ifdef WITH_GUI
         printArg("--gui","Output the image to the viewer gui");
+#endif
         printArg("-l",  "Set delay in us in image acquisition loop");
         printArg("-h",  "Set image height");
         printArg("-i",  "Start single image acquisition");
@@ -36,7 +40,9 @@ int BasicStreamRunner::setup(CommandArgs &args)
 {
         m_print                 = args.optionInt("-p", -1);
         m_fb                    = args.exists("--fb");
+#ifdef WITH_GUI
         m_gui                   = args.exists("--gui");
+#endif
         m_delay                 = args.optionInt("-l",  0);
         m_height                = args.optionInt("-h", 0);
         m_singleAcquisition     = args.exists("-i");
@@ -68,9 +74,11 @@ int BasicStreamRunner::processImage(ImageSource *imageSource, Image *image)
                 m_frameBuffer.show(image);
         }
 
+#ifdef WITH_GUI
         if (m_gui) {
                 m_viewer.show(image);
         }
+#endif
 
         return 0;
 }
@@ -82,9 +90,11 @@ int BasicStreamRunner::run(ImageSource *imageSource)
                 m_frameBuffer.fill();
         }
 
+#ifdef WITH_GUI
         if (m_gui) {
                 m_viewer.init(imageSource);
         }
+#endif
 
         if (m_width > 0 || m_height > 0) {
                 imageSource->setSelection((m_x==-1)?0:m_x, (m_y==-1)?0:m_y, m_width, m_height);
@@ -121,9 +131,11 @@ int BasicStreamRunner::run(ImageSource *imageSource)
                 m_frameBuffer.close();
         }
 
+#ifdef WITH_GUI
         if (m_gui) {
                 m_viewer.hide();
         }
+#endif
 
         return 0;
 }

@@ -3,8 +3,10 @@
 
 MainWindow::MainWindow(const char *name) :
         Window(name),
-        m_imageSource(NULL),
-        m_ccmWindow("ColorChecker")
+        m_imageSource(NULL)
+#ifdef WITH_CCM
+        , m_ccmWindow("ColorChecker")
+#endif
 {
 
 }
@@ -17,13 +19,16 @@ void MainWindow::init(ImageSource *imageSource)
         addControl(new Control("Blacklevel",   "", 0,     0,   10, 0,    1024, 1, 5));
         addControl(new Control("Framerate", "mHz", 0,     0, 1000, 0, 1000000, 1, 6));
 
+#ifdef WITH_CCM
         addButton(new Button("ColorChecker", -1, 1));
+#endif
 }
 
 void MainWindow::show(Mat img)
 {
         Window::show(img);
 
+#ifdef WITH_CCM
         Button *colorCheckerButton = button("ColorChecker");
         assert(colorCheckerButton != NULL);
         if (colorCheckerButton->pressed()) {
@@ -31,6 +36,7 @@ void MainWindow::show(Mat img)
         } else {
                 m_ccmWindow.hide();
         }
+#endif
 }
 
 void MainWindow::onMouse(const MouseEvent &event)

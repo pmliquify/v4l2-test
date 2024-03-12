@@ -2,7 +2,9 @@
 
 #include <runners/imagesourcerunner.hpp>
 #include <gui/framebuffer.hpp>
+#ifdef WITH_GUI
 #include <gui/viewer.hpp>
+#endif
 
 
 class BasicStreamRunner : public ImageSourceRunner
@@ -19,7 +21,9 @@ protected:
         unsigned long m_lastTimestamp;
         FrameBuffer   m_frameBuffer;
         bool          m_fb;
+#ifdef WITH_GUI
         Viewer        m_viewer;
+#endif
         bool          m_gui;
         int           m_delay;
         int           m_x;

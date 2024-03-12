@@ -18,5 +18,7 @@ protected:
 
 private:
     ImageSource *m_imageSource;
+#ifdef WITH_CCM
     CCMWindow    m_ccmWindow;
+#endif
 };
