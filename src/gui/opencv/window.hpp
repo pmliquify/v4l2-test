@@ -25,7 +25,7 @@ public:
     void onMouse(int event, int x, int y, int flags);
 
 protected:
-    virtual void onMouse(const MouseEvent &event);
+    virtual void onMouse(const MouseEvent &event) {}
     virtual void update();
 
 private:

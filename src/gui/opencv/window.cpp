@@ -63,19 +63,6 @@ void Window::hide()
         }
 }
 
-void Window::onMouse(const MouseEvent &event)
-{
-        MouseEvent zoomedEvent = event;
-        zoomedEvent.move(m_roi.x, m_roi.y);
-
-        for (auto control : m_controls) {
-                control.second->onMouse(zoomedEvent);
-        }
-        for (auto button : m_buttons) {
-                button.second->onMouse(zoomedEvent);
-        }
-}
-
 void Window::update()
 {
         Mat img = m_img.clone();
@@ -159,6 +146,16 @@ void Window::onMouse(int event, int x, int y, int flags)
                 }
         }
 
-        onMouse(m_mouseEvent);
+        MouseEvent zoomedEvent = m_mouseEvent;
+        zoomedEvent.move(m_roi.x, m_roi.y);
+        for (auto control : m_controls) {
+                control.second->onMouse(zoomedEvent);
+        }
+        for (auto button : m_buttons) {
+                button.second->onMouse(zoomedEvent);
+        }
+
+        onMouse(zoomedEvent);
+        
         update();
 }
