@@ -12,19 +12,19 @@ Button::Button(const char *name, int x, int y) :
 
 void Button::draw(Mat img)
 {
+    char text[100];
+    sprintf(text, "%s", m_name.c_str());
+    m_text.setText(text);
+
+    if (m_mouseOver) {
+        rectangle(img, m_text.rect(), Scalar(0, 0, 0), 6);
+        rectangle(img, m_text.rect(), Scalar(255, 255, 255), 2);
+    }
     Scalar color = Scalar(100, 100, 100);
     if (m_pressed) {
         color = Scalar(255, 255, 255);
     }
-
-    char text[100];
-    sprintf(text, "%s", m_name.c_str());
-    m_text.setText(text);
     m_text.draw(img, color);
-
-    if (m_mouseOver) {
-        rectangle(img, m_text.rect(), Scalar(255, 255, 255), 2);
-    }
 }
 
 bool Button::pressed() 

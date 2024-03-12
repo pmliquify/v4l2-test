@@ -21,17 +21,17 @@ Control::Control(const char *name, const char *unit, int floatPrecision,
 
 void Control::draw(Mat img)
 {
-    Scalar color(255, 255, 255);
-
     char text[100];
     sprintf(text, "%s: % .*f %s%s", m_name.c_str(), m_floatPrecision, m_value, m_unit.c_str(),
         m_descMap[(int)m_value].c_str());
     m_text.setText(text);
-    m_text.draw(img, color);
 
+    Scalar color(255, 255, 255);
     if (m_mouseOver) {
+        rectangle(img, m_text.rect(), Scalar(0, 0, 0), 6);
         rectangle(img, m_text.rect(), color, 2);
     }
+    m_text.draw(img, color);
 }
 
 double Control::value() 

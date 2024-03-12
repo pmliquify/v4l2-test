@@ -19,7 +19,7 @@ void Text::setText(const String &text)
 
 Rect Text::rect() const 
 { 
-        int border = 8;
+        int border = 12;
         int borderTop = border;
         int borderLeft = border;
         int borderBottom = border;
@@ -42,12 +42,14 @@ void Text::draw(Mat img, Scalar color)
                 x = 20*x;
         }
         if (y < 0) {
-                y = (img.rows - m_size.height*(y+2));
+                y = (img.rows - 2.2*m_size.height * (y+2));
         } else {
-                y = y*40;
+                y = 2.2*m_size.height * y;
         }
 
         m_position = Point(x, y - m_size.height + m_thickness/2);
+        putText(img, m_text, Point(x, y),
+                m_fontFace, m_fontScale, Scalar(0, 0, 0), 4*m_thickness);
         putText(img, m_text, Point(x, y),
                 m_fontFace, m_fontScale, color, m_thickness);
 }
