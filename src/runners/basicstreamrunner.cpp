@@ -71,12 +71,16 @@ int BasicStreamRunner::processImage(ImageSource *imageSource, Image *image)
         }
 
         if (m_fb) {
-                m_frameBuffer.show(image);
+                if (m_frameBuffer.show(image) != 0) {
+                        return -1;
+                }
         }
 
 #ifdef WITH_GUI
         if (m_gui) {
-                m_viewer.show(image);
+                if (m_viewer.show(image) != 0) {
+                        return -1;
+                }
         }
 #endif
 
@@ -108,18 +112,20 @@ int BasicStreamRunner::run(ImageSource *imageSource)
         }
 
         if (m_singleAcquisition) {
-                for (int index = 0; index < count; index += step) {
+                int error = 0;
+                for (int index = 0; index < count && error == 0; index += step) {
                         Image *image = imageSource->getImage(1000000);
                         if (image != NULL) {
-                                processImage(imageSource, image);
+                                error = processImage(imageSource, image);
                         }
                 }
         } else {
                 if (imageSource->streamOn(3) == 0) {
-                        for (int index = 0; index < count; index += step) {
+                        int error = 0;
+                        for (int index = 0; index < count && error == 0; index += step) {
                                 Image *image = imageSource->getNextImage(1000000);
                                 if (image != NULL) {
-                                        processImage(imageSource, image);
+                                        error = processImage(imageSource, image);
                                         imageSource->releaseImage(image);
                                 }
                         }

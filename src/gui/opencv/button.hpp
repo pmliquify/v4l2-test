@@ -14,6 +14,7 @@ public:
 
     String name() const { return m_name; }
     bool pressed();
+    void setPressed(bool pressed);
 
     void draw(Mat img);
 

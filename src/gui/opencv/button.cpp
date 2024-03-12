@@ -33,6 +33,12 @@ bool Button::pressed()
     return m_pressed; 
 }
 
+void Button::setPressed(bool pressed)
+{
+    m_hasChanged = true;
+    m_pressed = pressed;
+}
+
 void Button::onMouse(const MouseEvent &event)
 {
     m_mouseOver = m_text.rect().contains(event.position());

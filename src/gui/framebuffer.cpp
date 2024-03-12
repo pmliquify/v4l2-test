@@ -102,7 +102,7 @@ void FrameBuffer::fill()
 #endif
 }
 
-void FrameBuffer::show(const Image *image)
+int FrameBuffer::show(const Image *image)
 {
         switch (image->pixelformat()) {
         case V4L2_PIX_FMT_GREY:
@@ -129,6 +129,7 @@ void FrameBuffer::show(const Image *image)
                 print16(image, image->shift() + 4); 
                 break;
         }
+        return 0;
 }
 
 void FrameBuffer::print08(const Image *image)

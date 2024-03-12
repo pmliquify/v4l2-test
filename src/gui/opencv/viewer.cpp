@@ -20,12 +20,17 @@ void Viewer::init(ImageSource *imageSource)
         mainWindow.init(imageSource);
 }
 
-void Viewer::show(Image *image)
+int Viewer::show(Image *image)
 {
+        if (mainWindow.wasClosed()) {
+              return -1;  
+        }
+
         Mat img = convert(image);
         drawImageInfo(img, image, 1, 1);
 
         mainWindow.show(img);
+        return 0;
 }
 
 void Viewer::hide()

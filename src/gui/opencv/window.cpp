@@ -9,6 +9,7 @@ void onMouseCallback(int event, int x, int y, int flags, void* userdata)
 Window::Window(const char *name) :
         m_name(name),
         m_visible(false),
+        m_wasClosed(false),
         m_roiCenter(-1, -1),
         m_roiZoom(1.0),
         m_roiZoomStart(1.0)
@@ -45,14 +46,24 @@ void Window::show(Mat img)
 {
         if (!m_visible) {
                 namedWindow(m_name, WINDOW_NORMAL);
-                resizeWindow(m_name, 1920, 1080);
+                resizeWindow(m_name, img.cols/2, img.rows/2);
                 setMouseCallback(m_name, onMouseCallback, this);
                 startWindowThread();
-                m_visible = true;
         }
-        
+        if (m_visible) {
+                try {
+                        bool visible = getWindowProperty(m_name, WINDOW_NORMAL);
+
+                } catch (const cv::Exception& e) {
+                        m_wasClosed = true;
+                        m_visible = false;
+                        return;
+                }
+        }
+
         m_img = img;
         update();
+        m_visible = true;
 }
 
 void Window::hide()
@@ -61,6 +72,15 @@ void Window::hide()
                 destroyWindow(m_name);
                 m_visible = false;
         }
+}
+
+bool Window::wasClosed()
+{ 
+        if (m_wasClosed) {
+                m_wasClosed = false;
+                return true;
+        }
+        return false; 
 }
 
 void Window::update()
@@ -108,6 +128,7 @@ void Window::update()
         Mat zoomedImage = img(m_roi);
 
         imshow(m_name, zoomedImage);
+        m_visible = true;
 }
 
 void Window::onMouse(int event, int x, int y, int flags)

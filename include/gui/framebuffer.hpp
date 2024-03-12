@@ -12,7 +12,7 @@ public:
         int open();
         int close();
         void fill();
-        void show(const Image *image);
+        int show(const Image *image);
 
 protected:
         int m_fd;

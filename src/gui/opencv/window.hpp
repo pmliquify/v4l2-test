@@ -21,6 +21,7 @@ public:
 
     virtual void show(Mat img);
     virtual void hide();
+    bool wasClosed();
 
     void onMouse(int event, int x, int y, int flags);
 
@@ -32,6 +33,7 @@ private:
     String      m_name;
     Mat         m_img;
     bool        m_visible;
+    bool        m_wasClosed;
     MouseEvent  m_mouseEvent;
     Point       m_roiCenter;
     float       m_roiZoom;

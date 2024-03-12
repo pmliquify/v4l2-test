@@ -11,6 +11,6 @@ public:
     ~Viewer();
 
     void init(ImageSource *imageSource);
-    void show(Image *image);
+    int show(Image *image);
     void hide();
 };

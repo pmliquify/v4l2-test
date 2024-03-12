@@ -31,6 +31,9 @@ void MainWindow::show(Mat img)
 #ifdef WITH_CCM
         Button *colorCheckerButton = button("ColorChecker");
         assert(colorCheckerButton != NULL);
+        if (m_ccmWindow.wasClosed()) {
+                colorCheckerButton->setPressed(false);
+        }
         if (colorCheckerButton->pressed()) {
                 m_ccmWindow.show(img);
         } else {
