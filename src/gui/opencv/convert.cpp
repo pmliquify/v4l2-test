@@ -28,8 +28,12 @@ Mat convert(Image *image)
         case V4L2_PIX_FMT_YUYV:    type =  CV_8UC2; debayer = true;  divider =    1; code = COLOR_YUV2BGR_YUY2; break;
         }
 
-        Mat imageRAW(image->height(), image->width(), type, (char *)image->planes()[0]);
-        Mat imageRAW8 = imageRAW.clone();
+        Mat imageRAW8(image->height(), image->width(), type, Scalar(200, 0, 0));
+        int imageSize = image->bytesPerLine() * image->height();
+        if (image->imageSize() < imageSize) {
+                imageSize = image->imageSize();
+        }
+        memcpy(imageRAW8.data, (char *)image->planes()[0], imageSize);
 
         if (divider > 1) {
                 imageRAW8.convertTo(imageRAW8, CV_8UC1, 255.0/divider/(1 << image->shift()));
