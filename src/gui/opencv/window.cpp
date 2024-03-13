@@ -1,4 +1,5 @@
 #include "window.hpp"
+#include <time.h>
 
 
 void onMouseCallback(int event, int x, int y, int flags, void* userdata)
@@ -129,6 +130,24 @@ void Window::update()
 
         imshow(m_name, zoomedImage);
         m_visible = true;
+}
+
+void Window::saveImage() const
+{
+        time_t now = time(0);
+        struct tm tstruct;
+        tstruct = *localtime(&now);
+        char time[80];
+        strftime(time, sizeof(time), "%Y%m%d-%H%M%S", &tstruct);
+
+        char filename[200];
+        sprintf(filename, "/tmp/%s.png", time);
+
+        vector<int> compression_params;
+        compression_params.push_back(IMWRITE_PNG_COMPRESSION);
+        compression_params.push_back(9);
+
+        imwrite(filename, m_img, compression_params);
 }
 
 void Window::onMouse(int event, int x, int y, int flags)

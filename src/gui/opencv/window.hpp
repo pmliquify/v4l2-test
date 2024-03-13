@@ -28,6 +28,7 @@ public:
 protected:
     virtual void onMouse(const MouseEvent &event) {}
     virtual void update();
+    virtual void saveImage() const;
 
 private:
     String      m_name;
