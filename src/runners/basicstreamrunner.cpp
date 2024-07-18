@@ -16,24 +16,26 @@ BasicStreamRunner::BasicStreamRunner() :
         m_width(0),
         m_height(0),
         m_singleAcquisition(false),
-        m_imageCount(-1)
+        m_imageCount(-1),
+        m_timeout(1000000)
 {
 }
 
 void BasicStreamRunner::printArgs()
 {
-        printArg("-p",  "Print image data in format (1: bin, 10: dec, 16: hex)");
-        printArg("--fb","Output the image to the framebuffer");
+        printArg("-p",          "Print image data in format (1: bin, 10: dec, 16: hex)");
+        printArg("--fb",        "Output the image to the framebuffer");
 #ifdef WITH_GUI
-        printArg("--gui","Output the image to the viewer gui");
+        printArg("--gui",       "Output the image to the viewer gui");
 #endif
-        printArg("-l",  "Set delay in us in image acquisition loop");
-        printArg("-h",  "Set image height");
-        printArg("-i",  "Start single image acquisition");
-        printArg("-n",  "Number of images to captured");
-        printArg("-w",  "Set image width");
-        printArg("-x",  "Set x pixel position to print");
-        printArg("-y",  "Set y pixel position to print");
+        printArg("-l",          "Set delay in us in image acquisition loop");
+        printArg("-h",          "Set image height");
+        printArg("-i",          "Start single image acquisition");
+        printArg("-n",          "Number of images to captured");
+        printArg("-w",          "Set image width");
+        printArg("-x",          "Set x pixel position to print");
+        printArg("-y",          "Set y pixel position to print");
+        printArg("--timeout",   "Set the timeout for image acquisition");
 }
 
 int BasicStreamRunner::setup(CommandArgs &args)
@@ -50,6 +52,7 @@ int BasicStreamRunner::setup(CommandArgs &args)
         m_width                 = args.optionInt("-w", 0);
         m_x                     = args.optionInt("-x", -1);
         m_y                     = args.optionInt("-y", -1);
+        m_timeout               = args.optionInt("--timeout", 1000000);
         return 0;
 }
 
@@ -114,19 +117,27 @@ int BasicStreamRunner::run(ImageSource *imageSource)
         if (m_singleAcquisition) {
                 int error = 0;
                 for (int index = 0; index < count && error == 0; index += step) {
-                        Image *image = imageSource->getImage(1000000);
-                        if (image != NULL) {
+                        Image *image = NULL;
+                        int ret = imageSource->getImage(image, m_timeout);
+                        if (ret == 0) {
                                 error = processImage(imageSource, image);
+
+                        } else if (ret == -2) {
+                               printf("Timeout: No image acquired! (%u us)\n", m_timeout);
                         }
                 }
         } else {
                 if (imageSource->streamOn(3) == 0) {
                         int error = 0;
                         for (int index = 0; index < count && error == 0; index += step) {
-                                Image *image = imageSource->getNextImage(1000000);
-                                if (image != NULL) {
+                                Image *image = NULL;
+                                int ret = imageSource->getNextImage(image, m_timeout);
+                                if (ret == 0) {
                                         error = processImage(imageSource, image);
                                         imageSource->releaseImage(image);
+
+                                } else if (ret == -2) {
+                                       printf("Timeout: No image acquired! (%u us)\n", m_timeout);
                                 }
                         }
                         imageSource->streamOff();

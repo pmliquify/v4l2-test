@@ -32,6 +32,7 @@ protected:
         int           m_height;
         bool          m_singleAcquisition;
         int           m_imageCount;
+        int           m_timeout;
 
         virtual int processImage(ImageSource *imageSource, Image *image);
 };

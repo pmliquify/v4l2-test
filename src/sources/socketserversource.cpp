@@ -31,23 +31,26 @@ int SocketServerSource::setup(CommandArgs &args)
         return 0;
 }
 
-Image *SocketServerSource::getNextImage(int timeout, bool lastImage)
+int SocketServerSource::getNextImage(Image *&image, int timeout, bool lastImage)
 {
+        image = NULL;
+
         if (!m_socket.isConnected()) {
                 printf("Wait for client to connect ...\n");
                 if (m_socket.accept() == 0) {
-                printf("Client connected!\n");
+                        printf("Client connected!\n");
                 } else {
-                usleep(1000000);
+                        usleep(1000000);
                 }
         }
         
         if (m_socket.receiveImage(m_image) == 0) {
-                return m_image;
+                image = m_image;
+                return 0;
         }
 
         printf("Connection to client closed!\n");
-        return NULL;
+        return -1;
 }
 
 int SocketServerSource::setExposure(int exposure)  

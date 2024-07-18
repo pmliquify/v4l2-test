@@ -13,7 +13,7 @@ public:
         void printArgs();
         int setup(CommandArgs &args);
 
-        virtual Image *getNextImage(int timeout, bool lastImage = true);
+        virtual int getNextImage(Image *&image, int timeout, bool lastImage = true);
 
         virtual int setGain(int gain);
         virtual int setExposure(int exposure);

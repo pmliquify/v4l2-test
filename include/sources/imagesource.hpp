@@ -15,9 +15,9 @@ public:
         
         virtual int streamOn(int bufferCount = 3) { return 0; }
         virtual int streamOff() { return 0; }
-        virtual Image *getNextImage(int timeout, bool lastImage = true) { return 0; }
+        virtual int getNextImage(Image *&image, int timeout, bool lastImage = true) { return 0; }
         virtual int releaseImage(Image *image) { return 0; }
-        virtual Image *getImage(int timeout, bool lastImage = true) { return 0; }
+        virtual int getImage(Image *&image, int timeout, bool lastImage = true) { return 0; }
 
         virtual int setExposure(int exposure)  { return 0; }
         virtual int setGain(int gain) { return 0; }

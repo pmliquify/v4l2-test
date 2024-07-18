@@ -280,8 +280,10 @@ int V4L2ImageSource::streamOff()
         return 0;
 }
 
-Image *V4L2ImageSource::getNextImage(int timeout, bool lastImage)
+int V4L2ImageSource::getNextImage(Image *&image, int timeout, bool lastImage)
 {
+        image = NULL;
+
         if (lastImage) {
                 int ret = 0;
                 while(ret == 0) {
@@ -293,13 +295,14 @@ Image *V4L2ImageSource::getNextImage(int timeout, bool lastImage)
                         }
                 }
         } 
-        if (-1 == waitForNextBuffer(timeout)) {
-                return NULL;
+        int ret = waitForNextBuffer(timeout);
+        if (ret < 0) {
+                return ret;
         }
 
         struct v4l2_buffer *buffer = dequeueBuffer(m_nextBufferIndex);
         if (buffer == NULL) {
-                return NULL;
+                return -3;
         }
 
         m_image->setBufferIndex(m_nextBufferIndex);
@@ -325,7 +328,8 @@ Image *V4L2ImageSource::getNextImage(int timeout, bool lastImage)
                 break;
         }
         
-        return m_image;
+        image = m_image;
+        return 0;
 }
 
 int V4L2ImageSource::releaseImage(Image *image)
@@ -342,16 +346,19 @@ int V4L2ImageSource::releaseImage(Image *image)
         return 0;
 }
 
-Image *V4L2ImageSource::getImage(int timeout, bool lastImage)
+int V4L2ImageSource::getImage(Image *&image, int timeout, bool lastImage)
 {
-        if (-1 == streamOn(3)) {
-                return NULL;
+        int ret = streamOn(3);
+        if (ret < 0) {
+                return ret;
         }
-        if (NULL == getNextImage(timeout, lastImage)) {
-                releaseImage(m_image);
+        ret = getNextImage(image, timeout, lastImage);
+        if (ret < 0) {
+                return ret;
         }
+        releaseImage(image);
         streamOff();
-        return m_image;
+        return 0;
 }
 
 int V4L2ImageSource::setExposure(int exposure)

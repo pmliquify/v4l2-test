@@ -24,9 +24,9 @@ public:
         
         int streamOn(int bufferCount = 3);
         int streamOff();
-        Image *getNextImage(int timeout, bool lastImage = true);
+        int getNextImage(Image *&image, int timeout, bool lastImage = true);
         int releaseImage(Image *image);
-        Image *getImage(int timeout, bool lastImage = true);
+        int getImage(Image *&image, int timeout, bool lastImage = true);
 
         int setExposure(int exposure);
         int setGain(int gain);

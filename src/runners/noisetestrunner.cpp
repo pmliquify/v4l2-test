@@ -50,8 +50,10 @@ int NoiseTestRunner::setup(CommandArgs &args)
 void NoiseTestRunner::getAllImagesFromBuffer(ImageSource *imageSource)
 {
         for (int i=0; i<m_bufferCount; i++) {
-                Image *image = imageSource->getNextImage(1000000);
-                imageSource->releaseImage(image);
+                Image *image = NULL;
+                if (imageSource->getNextImage(image, 1000000)) {
+                        imageSource->releaseImage(image);
+                }
         }
 }
 
@@ -70,8 +72,8 @@ Image *NoiseTestRunner::measureStats(ImageSource *imageSource, int exposure, int
 
         getAllImagesFromBuffer(imageSource);
 
-        Image *image = imageSource->getNextImage(1000000);
-        if (image == NULL) {
+        Image *image = NULL;
+        if (imageSource->getNextImage(image, 1000000) != 0) {
                 return NULL;
         }
 
