@@ -1,7 +1,7 @@
 #include <runners/basicstreamrunner.hpp>
 #include <cv/imageprint.hpp>
 #include <unistd.h>
-
+#include <cstdlib> // for system()
 
 BasicStreamRunner::BasicStreamRunner() :
         m_print(16),
@@ -19,6 +19,13 @@ BasicStreamRunner::BasicStreamRunner() :
         m_imageCount(-1),
         m_timeout(1000000)
 {
+}
+
+BasicStreamRunner::~BasicStreamRunner()
+{
+        printf("BasicStreamRunner::~BasicStreamRunner()\n");
+        fflush(stdout);
+        m_running = false;
 }
 
 void BasicStreamRunner::printArgs()
@@ -69,14 +76,33 @@ int BasicStreamRunner::processImage(ImageSource *imageSource, Image *image)
                 ImagePrint::print(image, m_print, m_x, m_y, m_lastTimestamp, 10);
                 m_lastTimestamp = image->timestamp();
         } else {
-                printf(">");
-                fflush(stdout);
+                if (!m_fb) {
+                        printf(">");
+                        fflush(stdout);
+                }
         }
 
         if (m_fb) {
+                // Suppress console output
+                int stdout_fd = dup(STDOUT_FILENO);
+                int stderr_fd = dup(STDERR_FILENO);
+                freopen("/dev/null", "w", stdout);
+                freopen("/dev/null", "w", stderr);
+
                 if (m_frameBuffer.show(image) != 0) {
+                        // Restore console output
+                        dup2(stdout_fd, STDOUT_FILENO);
+                        dup2(stderr_fd, STDERR_FILENO);
+                        close(stdout_fd);
+                        close(stderr_fd);
                         return -1;
                 }
+
+                // Restore console output
+                dup2(stdout_fd, STDOUT_FILENO);
+                dup2(stderr_fd, STDERR_FILENO);
+                close(stdout_fd);
+                close(stderr_fd);
         }
 
 #ifdef WITH_GUI
@@ -90,8 +116,11 @@ int BasicStreamRunner::processImage(ImageSource *imageSource, Image *image)
         return 0;
 }
 
+
+
 int BasicStreamRunner::run(ImageSource *imageSource) 
 {
+        m_running = true;
         if (m_fb) {
                 m_frameBuffer.open();
                 m_frameBuffer.fill();
@@ -129,7 +158,9 @@ int BasicStreamRunner::run(ImageSource *imageSource)
         } else {
                 if (imageSource->streamOn(3) == 0) {
                         int error = 0;
-                        for (int index = 0; index < count && error == 0; index += step) {
+                        for (int index = 0; index < count && error == 0 && m_running; index += step) {
+                                
+        
                                 Image *image = NULL;
                                 int ret = imageSource->getNextImage(image, m_timeout);
                                 if (ret == 0) {
@@ -141,11 +172,17 @@ int BasicStreamRunner::run(ImageSource *imageSource)
                                 }
                         }
                         imageSource->streamOff();
+                        m_frameBuffer.close();
+                        printf("Closing loop\n");
+                        fflush(stdout);
                 }
         }
 
         if (m_fb) {
                 m_frameBuffer.close();
+                printf("FrameBuffer closed\n");
+                fflush(stdout);
+
         }
 
 #ifdef WITH_GUI
@@ -154,5 +191,14 @@ int BasicStreamRunner::run(ImageSource *imageSource)
         }
 #endif
 
+
+        return 0;
+}
+int BasicStreamRunner::closeRunner()
+{
+        m_running = false;
+        sleep(2);
+        printf("Closing BasicStreamRunner\n");
+        fflush(stdout);
         return 0;
 }

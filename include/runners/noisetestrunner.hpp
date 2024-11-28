@@ -11,6 +11,7 @@ public:
         void printArgs();
         int setup(CommandArgs &args);
         int run(ImageSource *imageSource);
+        int closeRunner() { return 0; }
 
 private:
         int  m_bufferCount;

@@ -53,12 +53,25 @@ int FrameBuffer::open()
 
 int FrameBuffer::close()
 {
+        if (m_ptr != NULL)
+        {
+                // Clear the framebuffer by setting it to black
+                memset(m_ptr, 0, m_varScreenInfo.xres * m_varScreenInfo.yres * m_varScreenInfo.bits_per_pixel / 8);
+
+                int byteCount = m_varScreenInfo.xres * m_varScreenInfo.yres * m_varScreenInfo.bits_per_pixel / 8;
+                munmap(m_ptr, byteCount);
+                m_ptr = NULL;
+        }
+
         if (m_fd != 0 && -1 == ::close(m_fd))
         {
                 handleErrorForClose(m_fd, errno);
         }
 
         m_fd = 0;
+        printf("FrameBuffer closed\n");
+        fflush(stdout); // Ensure the message is displayed
+        sleep(1); // Sleep for 1 second before clearing the console
         system("clear"); // Clear the console
         return 0;
 }

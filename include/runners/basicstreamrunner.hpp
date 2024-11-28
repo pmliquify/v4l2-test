@@ -6,15 +6,21 @@
 #include <gui/viewer.hpp>
 #endif
 
+#include <atomic>
 
 class BasicStreamRunner : public ImageSourceRunner
 {
 public:
         BasicStreamRunner();
+        ~BasicStreamRunner();
 
         virtual void printArgs();
         virtual int setup(CommandArgs &args);
         virtual int run(ImageSource *imageSource);
+        int closeRunner();
+
+        std::atomic<bool> m_running;
+
 
 protected:
         int           m_print;

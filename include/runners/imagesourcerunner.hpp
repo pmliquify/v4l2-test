@@ -9,6 +9,7 @@ class ImageSourceRunner : public CommandArgsConsumer
 {
 public:
         virtual int run(ImageSource *imageSource) = 0;
+        virtual int closeRunner() = 0;
 };
 
 typedef std::map<std::string, ImageSourceRunner *> ImageSourceRunnerMap;
