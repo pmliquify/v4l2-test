@@ -6,7 +6,9 @@
 #include <runners/isprunner.hpp>
 #include <runners/noisetestrunner.hpp>
 #include <runners/socketclientrunner.hpp>
+#include <csignal> // for signal handling
 
+ImageSourceRunnerMap runnerMap;
 
 bool printHelp(CommandArgs &args, ImageSourceRunnerMap &runnerMap, ImageSource *imageSource)
 {
@@ -65,18 +67,28 @@ void runRunner(CommandArgs &args, ImageSourceRunnerMap &runnerMap, ImageSource *
 void deleteRunners(ImageSourceRunnerMap &runnerMap)
 {
         for (auto it = runnerMap.begin(); it != runnerMap.end(); ++it) {
+                it->second->closeRunner();
                 delete it->second;
         }
         runnerMap.clear();
 }
 
+void signalHandler(int signum)
+{
+        deleteRunners(runnerMap);
+        sleep(1);
+        exit(signum);
+}
+
 int main(int argc, const char *argv[])
 {
+        // Register signal handler for Ctrl-C
+        signal(SIGINT, signalHandler);
+
         CommandArgs args(argc, argv);
 
         ImageSource *imageSource = createImageSource(args);
 
-        ImageSourceRunnerMap runnerMap;
         createRunners(runnerMap);
         
         if (!printHelp(args, runnerMap, imageSource)) {
