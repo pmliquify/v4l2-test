@@ -16,7 +16,7 @@ public:
 
 protected:
         int m_fd;
-        void * m_ptr;
+        void *m_ptr;
 
 private:
         struct fb_var_screeninfo m_varScreenInfo;
@@ -24,6 +24,7 @@ private:
 
         void print08(const Image *image);
         void print16(const Image *image, unsigned char shift);
+        void printDeBayer08(const Image *image);
 
         void handleErrorForOpen(const char *path, int err);
         void handleErrorForClose(int fd, int err);
