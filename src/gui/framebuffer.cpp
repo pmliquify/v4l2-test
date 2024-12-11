@@ -42,6 +42,7 @@ int FrameBuffer::open()
         }
 
         int byteCount = m_varScreenInfo.xres * m_varScreenInfo.yres * m_varScreenInfo.bits_per_pixel / 8;
+        printf("FrameBuffer opened: %dx%d, %d bpp\n", m_varScreenInfo.xres, m_varScreenInfo.yres, m_varScreenInfo.bits_per_pixel);
         m_ptr = mmap(NULL, byteCount, PROT_READ | PROT_WRITE, MAP_SHARED, m_fd, 0);
         if (m_ptr == MAP_FAILED)
         {
@@ -70,8 +71,8 @@ int FrameBuffer::close()
 
         m_fd = 0;
         printf("FrameBuffer closed\n");
-        fflush(stdout); // Ensure the message is displayed
-        sleep(1); // Sleep for 1 second before clearing the console
+        fflush(stdout);  // Ensure the message is displayed
+        sleep(1);        // Sleep for 1 second before clearing the console
         system("clear"); // Clear the console
         return 0;
 }
@@ -135,7 +136,12 @@ int FrameBuffer::show(const Image *image)
         case V4L2_PIX_FMT_SBGGR8:
                 printDeBayer08(image);
                 break;
-        case V4L2_PIX_FMT_Y10:
+        case V4L2_PIX_FMT_Y10:            
+                printGrey10(image);
+                break;
+        case V4L2_PIX_FMT_Y10P:            
+                printGrey10P(image);
+                break;
         case V4L2_PIX_FMT_SRGGB10:
         case V4L2_PIX_FMT_SGBRG10:
         case V4L2_PIX_FMT_SGRBG10:
@@ -153,6 +159,161 @@ int FrameBuffer::show(const Image *image)
                 break;
         }
         return 0;
+}
+
+void FrameBuffer::printGrey10(const Image *image)
+{
+        {
+                unsigned int width = (image->width() < m_varScreenInfo.xres) ? image->width() : m_varScreenInfo.xres;
+                unsigned int height = (image->height() < m_varScreenInfo.yres) ? image->height() : m_varScreenInfo.yres - 1;
+                unsigned int bytesPerPixelFB = m_varScreenInfo.bits_per_pixel / 8;
+                unsigned char *ptrFB = (unsigned char *)m_ptr;
+                const unsigned char *ptrImage = image->planes()[0];
+
+#if _OPENMP
+                unsigned int threadCount = omp_get_num_procs();
+                omp_set_num_threads(threadCount);
+                unsigned int threadHeight = height / threadCount;
+
+#pragma omp parallel
+                {
+                        int threadId = omp_get_thread_num();
+                        for (unsigned int y = threadId * threadHeight; y < (threadId + 1) * threadHeight; y++)
+                        {
+#else
+                for (unsigned int y = 0; y < height; y++)
+                {
+#endif
+
+                                unsigned int yOffsetPtrFB = m_varScreenInfo.xoffset * bytesPerPixelFB + (y + m_varScreenInfo.yoffset) * m_fixScreenInfo.line_length;
+                                unsigned int YOffsetPtrImage = (y * image->bytesPerLine());
+
+                                unsigned int bytesPerPixelImage = 2;
+                                unsigned char pixelStep = 4;
+
+                                for (unsigned int x = 0; x < width / pixelStep; x += 1)
+                                {
+                                        unsigned int xOffsetPtrImage = x * bytesPerPixelImage;
+                                        const unsigned char *pixelImage = ptrImage + YOffsetPtrImage + xOffsetPtrImage;
+                                        unsigned int xOffsetPtrFB = x * bytesPerPixelFB * pixelStep;
+                                        unsigned char *pixelFB = ptrFB + yOffsetPtrFB + xOffsetPtrFB;
+
+                                        switch (bytesPerPixelFB)
+                                        {
+                                        default:
+                                                *((unsigned long *)pixelFB) = grey10BitToRGB888(*(uint16_t *)pixelImage);
+                                                break;
+                                        case 2:
+
+                                                *((uint16_t *)pixelFB) = grey10BitToRGB565(*(uint16_t *)pixelImage);
+                                                break;
+                                        }
+                                }
+                        }
+                }
+
+#if _OPENMP
+        }
+#endif
+}
+
+uint16_t FrameBuffer::grey10BitToRGB565(const uint16_t &grey) const
+{
+        // Grey value to RGB565 conversion
+        // Convert 10-bit (0-1023) to 5-bit (0-31) for red and blue
+        unsigned int r5 = (grey >> 5) & 0x1F;
+        unsigned int b5 = (grey >> 5) & 0x1F;
+
+        // Convert 10-bit to 6-bit (0-63) for green
+        unsigned int g6 = (grey >> 4) & 0x3F;
+
+        // Pack into RGB565 format: RRRR RGGG GGGB BBBB
+        return (r5 << 11) | (g6 << 5) | b5;
+}
+uint16_t FrameBuffer::grey8BitToRGB565(const char &grey) const
+{
+        // Grey value to RGB565 conversion
+        // Convert 10-bit (0-1023) to 5-bit (0-31) for red and blue
+        unsigned int r5 = (grey >> 3) & 0x1F;
+        unsigned int b5 = (grey >> 3) & 0x1F;
+
+        // Convert 10-bit to 6-bit (0-63) for green
+        unsigned int g6 = (grey >> 2) & 0x3F;
+
+        // Pack into RGB565 format: RRRR RGGG GGGB BBBB
+        return (r5 << 11) | (g6 << 5) | b5;
+}
+unsigned long FrameBuffer::grey10BitToRGB888(const uint16_t &grey) const
+{
+        // Grey value to RGB888 conversion
+        // Convert 10-bit (0-1023) to 8-bit (0-255)
+        unsigned int grey8 = grey >> 2;
+
+        // Pack into RGB888 format: RRRR RGGG GGGB BBBB
+        return (grey8 << 16) | (grey8 << 8) | grey8;
+}
+unsigned long FrameBuffer::grey8BitToRGB888(const uint16_t &grey) const
+{
+        return (grey << 16) | (grey << 8) | grey;
+}
+void FrameBuffer::printGrey10P(const Image *image)
+{
+        unsigned int width = (image->width() < m_varScreenInfo.xres) ? image->width() : m_varScreenInfo.xres;
+        unsigned int height = (image->height() < m_varScreenInfo.yres) ? image->height() : m_varScreenInfo.yres - 1;
+        unsigned int bytesPerPixelFB = m_varScreenInfo.bits_per_pixel / 8;
+        unsigned char *ptrFB = (unsigned char *)m_ptr;
+        const unsigned char *ptrImage = image->planes()[0];
+
+#if _OPENMP
+        unsigned int threadCount = omp_get_num_procs();
+        omp_set_num_threads(threadCount);
+        unsigned int threadHeight = height / threadCount;
+
+#pragma omp parallel
+        {
+                int threadId = omp_get_thread_num();
+                for (unsigned int y = threadId * threadHeight; y < (threadId + 1) * threadHeight; y++)
+                {
+#else
+        for (unsigned int y = 0; y < height; y++)
+        {
+#endif
+
+                        unsigned int yOffsetPtrFB = m_varScreenInfo.xoffset * bytesPerPixelFB + (y + m_varScreenInfo.yoffset) * m_fixScreenInfo.line_length;
+                        unsigned int YOffsetPtrImage = (y * image->bytesPerLine());
+
+                        unsigned int bytesPerPixelImage = 5;
+                        unsigned char pixelStep = 4;
+
+                        for (unsigned int x = 0; x < width / pixelStep; x += 1)
+                        {
+                                unsigned int xOffsetPtrImage = x * bytesPerPixelImage;
+                                const unsigned char *pixelImage = ptrImage + YOffsetPtrImage + xOffsetPtrImage;
+                                unsigned int xOffsetPtrFB = x * bytesPerPixelFB * pixelStep;
+                                unsigned char *pixelFB = ptrFB + yOffsetPtrFB + xOffsetPtrFB;
+
+                                switch (bytesPerPixelFB)
+                                {
+                                default:
+                                        *((unsigned long *)pixelFB) = grey8BitToRGB888(pixelImage[0]);
+                                        *((unsigned long *)(pixelFB + bytesPerPixelFB)) = grey8BitToRGB888(pixelImage[1]);
+                                        *((unsigned long *)(pixelFB + 2 * bytesPerPixelFB)) = grey8BitToRGB888(pixelImage[2]);
+                                        *((unsigned long *)(pixelFB + 3 * bytesPerPixelFB)) = grey8BitToRGB888(pixelImage[3]);
+                                        break;
+                                case 2:
+
+                                        *((uint16_t *)pixelFB) = grey8BitToRGB565(pixelImage[0]);
+                                        *((uint16_t *)(pixelFB + 2)) = grey8BitToRGB565(pixelImage[1]);
+                                        *((uint16_t *)(pixelFB + 4)) = grey8BitToRGB565(pixelImage[2]);
+                                        *((uint16_t *)(pixelFB + 6)) = grey8BitToRGB565(pixelImage[3]);
+                                        break;
+                                }
+                        }
+                }
+
+#if _OPENMP
+        }
+#endif
 }
 
 void FrameBuffer::printDeBayer08(const Image *image)
@@ -239,7 +400,6 @@ void FrameBuffer::printDeBayer08(const Image *image)
         }
 #endif
 }
-
 
 void FrameBuffer::print08(const Image *image)
 {
@@ -426,6 +586,52 @@ void FrameBuffer::handleErrorForIoctl(unsigned long int request, int err)
                 break;
         }
         printf("%s\n", errorsForIoctl(request, err));
+}
+
+void FrameBuffer::writeTestImage()
+{
+        unsigned int width = m_varScreenInfo.xres;
+        unsigned int height = m_varScreenInfo.yres;
+        unsigned int bytesPerPixelFB = m_varScreenInfo.bits_per_pixel / 8;
+        unsigned char *ptrFB = (unsigned char *)m_ptr;
+
+        printf("Writing test image %u\n", bytesPerPixelFB);
+
+        for (unsigned int y = 0; y < height; y++)
+        {
+                for (unsigned int x = 0; x < width; x++)
+                {
+                        unsigned int xOffsetPtrFB = x * bytesPerPixelFB;
+                        unsigned int yOffsetPtrFB = m_varScreenInfo.xoffset * bytesPerPixelFB + (y + m_varScreenInfo.yoffset) * m_fixScreenInfo.line_length;
+                        unsigned char *pixelFB = ptrFB + yOffsetPtrFB + xOffsetPtrFB;
+
+                        // Create a simple test pattern (e.g., vertical stripes)
+                        if ((x / 50) % 2 == 0)
+                        {
+                                switch (bytesPerPixelFB)
+                                {
+                                default:
+                                        *((unsigned long *)pixelFB) = 0x00FF00FF; // Magenta
+                                        break;
+                                case 2:
+                                        *((unsigned int *)pixelFB) = 0xF81F; // Magenta in 16-bit
+                                        break;
+                                }
+                        }
+                        else
+                        {
+                                switch (bytesPerPixelFB)
+                                {
+                                default:
+                                        *((unsigned long *)pixelFB) = 0x000000FF; // Blue
+                                        break;
+                                case 2:
+                                        *((unsigned int *)pixelFB) = 0x001F; // Blue in 16-bit
+                                        break;
+                                }
+                        }
+                }
+        }
 }
 
 // Red:   187,  73,  15
