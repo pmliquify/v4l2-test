@@ -60,6 +60,21 @@ Each image is represented by one line.
      + sequence number
 ```
 
+Streaming with the first video device, acquire 10 frames at maximum speed, with an exposure of 15ms and 0 gain, display the innermost pixels as decimal values, without bit shift compensation:
+<pre>
+./v4l2-test stream -d /dev/video0 -r 0 -e 15000 -g 0 -p 10 -n 10
+</pre>
+
+Streaming with the same parameters as above, but display the innermost pixels as binary values:
+<pre>
+./v4l2-test stream -d /dev/video0 -r 0 -e 15000 -g 0 <b>-p 1</b> -n 10
+</pre>
+
+Streaming with the same parameters as above, display the innermost pixels as binary values with compensated bit shift:
+<pre>
+./v4l2-test stream -d /dev/video0 -r 0 -e 15000 -g 0 -p 1 -n 10 <b>--shift 5</b>
+</pre>
+
 ### Image streaming to the framebuffer
 
 If you have a display attached and a kernel with framebuffer support, you can get a better image output by streaming it to the framebuffer.
