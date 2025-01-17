@@ -14,8 +14,8 @@ Image::Image() :
 {
 }
 
-void Image::init(unsigned short width, unsigned short height, unsigned short bytesPerLine, unsigned int imageSize,
-                unsigned int bytesUsed, unsigned int pixelformat, unsigned int sequence, unsigned long timestamp)
+void Image::init(u_int16_t width, u_int16_t height, u_int16_t bytesPerLine, u_int32_t imageSize,
+                u_int32_t bytesUsed, u_int32_t pixelformat, u_int32_t sequence, u_int64_t timestamp)
 {
         m_width = width;
         m_height = height;
@@ -27,33 +27,42 @@ void Image::init(unsigned short width, unsigned short height, unsigned short byt
         m_timestamp = timestamp;
 
         switch (m_pixelformat) {
-        case V4L2_PIX_FMT_GREY:
-        case V4L2_PIX_FMT_SRGGB8:
-        case V4L2_PIX_FMT_SGBRG8:
-        case V4L2_PIX_FMT_SGRBG8:
-        case V4L2_PIX_FMT_SBGGR8: 
-                m_bytesPerPixel = 1;
-                break;
-        case V4L2_PIX_FMT_Y10:
-        case V4L2_PIX_FMT_SRGGB10:
-        case V4L2_PIX_FMT_SGBRG10:
-        case V4L2_PIX_FMT_SGRBG10:
-        case V4L2_PIX_FMT_SBGGR10:
-        case V4L2_PIX_FMT_Y12:
-        case V4L2_PIX_FMT_SRGGB12:
-        case V4L2_PIX_FMT_SGBRG12:
-        case V4L2_PIX_FMT_SGRBG12:
-        case V4L2_PIX_FMT_SBGGR12:
-                m_bytesPerPixel = 2;
+                case V4L2_PIX_FMT_GREY:
+                case V4L2_PIX_FMT_SRGGB8:
+                case V4L2_PIX_FMT_SGBRG8:
+                case V4L2_PIX_FMT_SGRBG8:
+                case V4L2_PIX_FMT_SBGGR8: 
+                        m_bytesPerPixel = 1.0;
+                        break;
+                case V4L2_PIX_FMT_Y10:
+                case V4L2_PIX_FMT_SRGGB10:
+                case V4L2_PIX_FMT_SGBRG10:
+                case V4L2_PIX_FMT_SGRBG10:
+                case V4L2_PIX_FMT_SBGGR10:
+                case V4L2_PIX_FMT_Y12:
+                case V4L2_PIX_FMT_SRGGB12:
+                case V4L2_PIX_FMT_SGBRG12:
+                case V4L2_PIX_FMT_SGRBG12:
+                case V4L2_PIX_FMT_SBGGR12:
+                        m_bytesPerPixel = 2.0;
+                        break;
+                case V4L2_PIX_FMT_Y10P:
+                case V4L2_PIX_FMT_SRGGB10P:
+                case V4L2_PIX_FMT_SGBRG10P:
+                case V4L2_PIX_FMT_SGRBG10P:
+                case V4L2_PIX_FMT_SBGGR10P:
+                        m_bytesPerPixel = 1.2; // 10 bits per pixel
+                        break;
+
         }
 }
 
-unsigned short Image::pixelValue(unsigned short x, unsigned short y) const
+u_int16_t Image::pixelValue(u_int16_t x, u_int16_t y) const
 {
-        const unsigned char *data = plane(0);
-        unsigned int index = y*m_bytesPerLine + x*m_bytesPerPixel;
-        const unsigned char *pixel = data + index;
-        unsigned short val16 = 0;
+        const u_int8_t *data = plane(0);
+        u_int32_t index = y*m_bytesPerLine + x*m_bytesPerPixel;
+        const u_int8_t *pixel = data + index;
+        u_int16_t val16 = 0;
 
         switch (m_pixelformat) {
         case V4L2_PIX_FMT_GREY:
@@ -61,7 +70,7 @@ unsigned short Image::pixelValue(unsigned short x, unsigned short y) const
         case V4L2_PIX_FMT_SGBRG8:
         case V4L2_PIX_FMT_SGRBG8:
         case V4L2_PIX_FMT_SBGGR8: 
-                val16 = (*(unsigned char*)pixel);
+                val16 = (*(u_int8_t*)pixel);
                 break;
         case V4L2_PIX_FMT_Y10:
         case V4L2_PIX_FMT_SRGGB10:
@@ -73,7 +82,21 @@ unsigned short Image::pixelValue(unsigned short x, unsigned short y) const
         case V4L2_PIX_FMT_SGBRG12:
         case V4L2_PIX_FMT_SGRBG12:
         case V4L2_PIX_FMT_SBGGR12:
-                val16 = (*(unsigned short*)pixel);
+                val16 = (*(u_int16_t*)pixel);
+        case V4L2_PIX_FMT_Y10P:
+        case V4L2_PIX_FMT_SRGGB10P:
+        case V4L2_PIX_FMT_SGBRG10P:
+        case V4L2_PIX_FMT_SGRBG10P:
+        case V4L2_PIX_FMT_SBGGR10P:
+        {
+                unsigned int first_value_index = y*m_bytesPerLine + (x/4)*4  * m_bytesPerPixel + (x%4);
+                unsigned int second_value_index = y*m_bytesPerLine + (x/4)*4 * m_bytesPerPixel + 4;
+                unsigned int mask = 3 << (x%4);
+                val16 = (data[first_value_index] << 2) | ((data[second_value_index] & mask) >> (x%4));
+                break;
+                
+        }
+        
         }
         val16 = val16 >> m_shift;
         return val16;
