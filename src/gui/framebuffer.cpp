@@ -70,10 +70,6 @@ int FrameBuffer::close()
         }
 
         m_fd = 0;
-        printf("FrameBuffer closed\n");
-        fflush(stdout);  // Ensure the message is displayed
-        sleep(1);        // Sleep for 1 second before clearing the console
-        system("clear"); // Clear the console
         return 0;
 }
 
@@ -92,7 +88,7 @@ void FrameBuffer::fill()
 #pragma omp parallel
         {
                 int threadId = omp_get_thread_num();
-                for (unsigned int y = threadId * threadHeight; y < (threadId + 1) * threadHeight; y++)
+                for (unsigned int y = threadId * threadHeight; y < ((threadId +1  < threadCount ) ?  ((threadId + 1) * threadHeight) : height) ; y++)
                 {
 #else
         for (unsigned int y = 0; y < height; y++)
@@ -165,7 +161,7 @@ void FrameBuffer::printGrey10(const Image *image)
 {
         {
                 unsigned int width = (image->width() < m_varScreenInfo.xres) ? image->width() : m_varScreenInfo.xres;
-                unsigned int height = (image->height() < m_varScreenInfo.yres) ? image->height() : m_varScreenInfo.yres - 1;
+                unsigned int height = (image->height() < m_varScreenInfo.yres) ? image->height() : m_varScreenInfo.yres;
                 unsigned int bytesPerPixelFB = m_varScreenInfo.bits_per_pixel / 8;
                 unsigned char *ptrFB = (unsigned char *)m_ptr;
                 const unsigned char *ptrImage = image->planes()[0];
@@ -178,7 +174,7 @@ void FrameBuffer::printGrey10(const Image *image)
 #pragma omp parallel
                 {
                         int threadId = omp_get_thread_num();
-                        for (unsigned int y = threadId * threadHeight; y < (threadId + 1) * threadHeight; y++)
+                for (unsigned int y = threadId * threadHeight; y < ((threadId +1  < threadCount ) ?  ((threadId + 1) * threadHeight) : height) ; y++)
                         {
 #else
                 for (unsigned int y = 0; y < height; y++)
@@ -259,7 +255,7 @@ unsigned long FrameBuffer::grey8BitToRGB888(const uint16_t &grey) const
 void FrameBuffer::printGrey10P(const Image *image)
 {
         unsigned int width = (image->width() < m_varScreenInfo.xres) ? image->width() : m_varScreenInfo.xres;
-        unsigned int height = (image->height() < m_varScreenInfo.yres) ? image->height() : m_varScreenInfo.yres - 1;
+        unsigned int height = (image->height() < m_varScreenInfo.yres) ? image->height() : m_varScreenInfo.yres;
         unsigned int bytesPerPixelFB = m_varScreenInfo.bits_per_pixel / 8;
         unsigned char *ptrFB = (unsigned char *)m_ptr;
         const unsigned char *ptrImage = image->planes()[0];
@@ -272,7 +268,7 @@ void FrameBuffer::printGrey10P(const Image *image)
 #pragma omp parallel
         {
                 int threadId = omp_get_thread_num();
-                for (unsigned int y = threadId * threadHeight; y < (threadId + 1) * threadHeight; y++)
+                for (unsigned int y = threadId * threadHeight; y < ((threadId +1  < threadCount ) ?  ((threadId + 1) * threadHeight) : height) ; y++)
                 {
 #else
         for (unsigned int y = 0; y < height; y++)
@@ -319,7 +315,7 @@ void FrameBuffer::printGrey10P(const Image *image)
 void FrameBuffer::printDeBayer08(const Image *image)
 {
         unsigned int width = (image->width() < m_varScreenInfo.xres) ? image->width() : m_varScreenInfo.xres;
-        unsigned int height = (image->height() < m_varScreenInfo.yres) ? image->height() : m_varScreenInfo.yres - 1;
+        unsigned int height = (image->height() < m_varScreenInfo.yres) ? image->height() : m_varScreenInfo.yres;
         unsigned int bytesPerPixelFB = m_varScreenInfo.bits_per_pixel / 8;
         unsigned char *ptrFB = (unsigned char *)m_ptr;
         const unsigned char *ptrImage = image->plane(0);
@@ -332,7 +328,7 @@ void FrameBuffer::printDeBayer08(const Image *image)
 #pragma omp parallel
         {
                 int threadId = omp_get_thread_num();
-                for (unsigned int y = threadId * threadHeight; y < (threadId + 1) * threadHeight; y++)
+                for (unsigned int y = threadId * threadHeight; y < ((threadId +1  < threadCount ) ?  ((threadId + 1) * threadHeight) : height) ; y++)
                 {
 #else
         for (unsigned int y = 0; y < height; y++)
@@ -417,7 +413,7 @@ void FrameBuffer::print08(const Image *image)
 #pragma omp parallel
         {
                 int threadId = omp_get_thread_num();
-                for (unsigned int y = threadId * threadHeight; y < (threadId + 1) * threadHeight; y++)
+                for (unsigned int y = threadId * threadHeight; y < ((threadId +1  < threadCount ) ?  ((threadId + 1) * threadHeight) : height) ; y++)
                 {
 #else
         for (unsigned int y = 0; y < height; y++)
@@ -488,7 +484,7 @@ void FrameBuffer::print16(const Image *image, unsigned char shift)
 #pragma omp parallel
         {
                 int threadId = omp_get_thread_num();
-                for (unsigned int y = threadId * threadHeight; y < (threadId + 1) * threadHeight; y++)
+                for (unsigned int y = threadId * threadHeight; y < ((threadId +1  < threadCount ) ?  ((threadId + 1) * threadHeight) : height) ; y++)
                 {
 #else
         for (unsigned int y = 0; y < height; y++)
