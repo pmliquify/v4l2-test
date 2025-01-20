@@ -51,7 +51,7 @@ void Image::init(u_int16_t width, u_int16_t height, u_int16_t bytesPerLine, u_in
                 case V4L2_PIX_FMT_SGBRG10P:
                 case V4L2_PIX_FMT_SGRBG10P:
                 case V4L2_PIX_FMT_SBGGR10P:
-                        m_bytesPerPixel = 1.2; // 10 bits per pixel
+                        m_bytesPerPixel = 1.25; // 10 bits per pixel
                         break;
 
         }
