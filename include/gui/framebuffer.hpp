@@ -16,6 +16,7 @@ public:
 
 protected:
         int m_fd;
+        int m_console_fd;
         void *m_ptr;
 
 private:

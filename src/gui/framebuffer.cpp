@@ -8,9 +8,13 @@
 #include <sys/mman.h>
 #include <linux/videodev2.h>
 #include <omp.h>
+#include <linux/kd.h>
+#include <linux/vt.h>
+
 
 FrameBuffer::FrameBuffer() : m_fd(0),
-                             m_ptr(NULL)
+                             m_ptr(NULL),
+                             m_console_fd(0)
 {
 }
 
@@ -21,6 +25,24 @@ FrameBuffer::~FrameBuffer()
 
 int FrameBuffer::open()
 {
+        // Try different console devices for cursor control
+        m_console_fd = -1;
+        const char *consoleDevices[] = {"/dev/tty3", "/dev/tty2", "/dev/tty1", "/dev/tty0", "/dev/console"};
+
+        for (const char* device : consoleDevices) {
+                m_console_fd = ::open(device, O_RDWR);
+                if (m_console_fd >= 0) {
+                        // Turn off cursor using KDSETMODE
+                        if (ioctl(m_console_fd, KDSETMODE, KD_GRAPHICS) == 0) {
+                               // Also try to hide cursor using VT100 escape sequence
+                                const char *hide_cursor = "\033[?25l";
+                                write(m_console_fd, hide_cursor, 6);
+                                break;
+                        }
+                        ::close(m_console_fd);
+                }
+        }
+
         const char *DevicePath = "/dev/fb0";
         m_fd = ::open(DevicePath, O_RDWR);
         if (-1 == m_fd)
@@ -54,6 +76,21 @@ int FrameBuffer::open()
 
 int FrameBuffer::close()
 {
+        if (m_console_fd >= 0) {
+                // Restore text mode
+                ioctl(m_console_fd, KDSETMODE, KD_TEXT);
+                
+                // Show cursor again using VT100 escape sequence
+                const char *show_cursor = "\033[?25h";
+                write(m_console_fd, show_cursor, 6);
+
+                const char *clear_screen = "\033[2J\033[H";
+                write(m_console_fd, clear_screen, 7);
+
+                ::close(m_console_fd);
+                m_console_fd = -1;
+        }
+
         if (m_ptr != NULL)
         {
                 // Clear the framebuffer by setting it to black
