@@ -35,3 +35,11 @@ int CommandArgs::optionInt(const std::string &option, int def)
         }
         return def;
 }
+std::string CommandArgs::optionString(const std::string &option, const std::string def)
+{
+        if (exists(option))
+        {
+                return CommandArgs::option(option);
+        }
+        return def;
+}

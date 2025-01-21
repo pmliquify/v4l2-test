@@ -11,7 +11,8 @@ public:
         bool exists(const std::string& option);
         std::string option(const std::string &option, const std::string def = "");
         int optionInt(const std::string &option, int def = 0);
-        
+        std::string optionString(const std::string &option, const std::string def = "");
+
 private:
         int m_argc;
         const char **m_argv;

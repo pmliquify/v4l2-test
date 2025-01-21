@@ -37,6 +37,7 @@ add_library(cv
         STATIC
         src/cv/image.cpp
         src/cv/imageprint.cpp
+        src/cv/imageConvertCPU.cpp
         src/cv/imagestats.cpp)
 target_include_directories(cv PUBLIC include)
 if (OPENMP_FOUND)
@@ -61,6 +62,23 @@ target_include_directories(sources PUBLIC include)
 target_link_libraries(sources PRIVATE cv utils)
 if (OPENCV_FOUND)
         target_link_libraries(sources PUBLIC ${OpenCV_LIBS})
+endif()
+find_package(PkgConfig REQUIRED)
+
+pkg_search_module(GSTREAMER REQUIRED IMPORTED_TARGET gstreamer-1.0>=1.4)
+pkg_search_module(GSTREAMER_SDP REQUIRED IMPORTED_TARGET gstreamer-sdp-1.0>=1.4)
+pkg_search_module(GSTREAMER_APP REQUIRED IMPORTED_TARGET gstreamer-app-1.0>=1.4)
+pkg_search_module(GSTREAMER_VIDEO REQUIRED IMPORTED_TARGET gstreamer-video-1.0>=1.4)
+
+# Library sources
+add_library(sinks
+        STATIC
+        src/sinks/gstreamerSink.cpp
+       )
+target_include_directories(sinks PUBLIC include  ${GSTREAMER_INCLUDE_DIRS} ${GSTREAMER_APP_INCLUDE_DIRS} )
+target_link_libraries(sinks PRIVATE cv utils ${GSTREAMER_APP_LIBRARIES} ${GSTREAMER_LIBRARIES})
+if (OPENCV_FOUND)
+        target_link_libraries(sinks PUBLIC ${OpenCV_LIBS})
 endif()
 
 # Library gui
@@ -91,9 +109,10 @@ add_library(runner
         src/runners/streamrunner.cpp
         src/runners/isprunner.cpp
         src/runners/noisetestrunner.cpp
+        src/runners/gstreamerRunner.cpp
         src/runners/socketclientrunner.cpp)
-target_include_directories(runner PUBLIC include)
-target_link_libraries(runner PRIVATE cv utils network gui sources)
+target_include_directories(runner PUBLIC include ${GSTREAMER_INCLUDE_DIRS} ${GSTREAMER_APP_INCLUDE_DIRS} )
+target_link_libraries(runner PRIVATE cv utils network gui sources sinks)
 
 
 # --- Executables -------------------------------------------------------------

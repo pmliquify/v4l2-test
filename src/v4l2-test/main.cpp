@@ -4,6 +4,8 @@
 #include <sources/socketserversource.hpp>
 #include <runners/streamrunner.hpp>
 #include <runners/isprunner.hpp>
+#include <runners/gstreamerRunner.hpp>
+
 #include <runners/noisetestrunner.hpp>
 #include <runners/socketclientrunner.hpp>
 #include <csignal> // for signal handling
@@ -51,6 +53,8 @@ void createRunners(ImageSourceRunnerMap &runnerMap)
         runnerMap["isp"] = new IspRunner();
         runnerMap["noise"] = new NoiseTestRunner();
         runnerMap["client"] = new SocketClientRunner();
+        runnerMap["gstreamer"] = new GstreamerRunner();
+
 }
 
 void runRunner(CommandArgs &args, ImageSourceRunnerMap &runnerMap, ImageSource *imageSource)
