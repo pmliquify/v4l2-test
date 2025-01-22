@@ -43,6 +43,21 @@ int GstreamerRunner::processImage(ImageSource *imageSource, Image *image)
                 ImageData data = m_imageConvertCPU.convert10BitPackedGreyToRGB888(image);
                 img = cv::Mat(image->height(), image->width(), CV_8UC3, data.data);
         }
+        if (image->pixelformat() == V4L2_PIX_FMT_SRGGB10P) {
+                ImageData data = m_imageConvertCPU.convert10BitPackedBayerToRGB888(image);
+                img = cv::Mat(image->height(), image->width(), CV_8UC3, data.data);
+                std::cout << "Bayer" << std::endl;
+        }
+        if (image->pixelformat() == V4L2_PIX_FMT_SRGGB8) {
+                ImageData data = m_imageConvertCPU.convert8BitBayerToRGB888(image);
+                img = cv::Mat(image->height(), image->width(), CV_8UC3, data.data);
+                std::cout << "Bayer" << std::endl;
+        }
+        else
+        {
+                                std::cerr << "Format not supported" << std::endl;
+
+        }
         if(img.empty())
         {
                 return -1;
@@ -58,6 +73,8 @@ int GstreamerRunner::processImage(ImageSource *imageSource, Image *image)
         duration = end - middle; // Calculate duration in milliseconds
 
         std::cout << "Time taken to push the image: " << duration.count() << " ms" << std::endl;
+
+        img.release();
 
 
         return 0;

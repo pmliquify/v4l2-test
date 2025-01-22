@@ -17,5 +17,8 @@ class ImageConvertCPU
 
         ImageData convert10BitGreyToRGB888(const Image *image) const;
         ImageData convert10BitPackedGreyToRGB888(const Image *image) const;
+        ImageData convert10BitPackedBayerToRGB888(const Image *image) const;
+        ImageData convert8BitBayerToRGB888(const Image *image) const;
+
 
 };

@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <omp.h>
 #include <iostream>
+#include <linux/videodev2.h>
 
 uint16_t ImageConvertCPU::grey10BitToRGB565(const uint16_t &grey) const
 {
@@ -155,3 +156,174 @@ ImageData ImageConvertCPU::convert10BitPackedGreyToRGB888(const Image *image) co
     result.size = dataSize;
     return result;
 }
+
+ImageData ImageConvertCPU::convert8BitBayerToRGB888(const Image *image) const
+{
+    const unsigned int bytesPerPixelFB = 3;
+    const u_int16_t width = image->width();
+    const u_int16_t height = image->height();
+    const u_int16_t bytesPerLine = image->bytesPerLine();
+    size_t dataSize = image->height() * image->width() * bytesPerPixelFB;
+    unsigned char *data = new unsigned char[dataSize];
+
+    const unsigned char *ptrImage = image->planes()[0];
+
+#if _OPENMP
+    unsigned int threadCount = omp_get_num_procs();
+    omp_set_num_threads(threadCount);
+    unsigned int threadHeight = height/ threadCount;
+
+#pragma omp parallel
+    {
+        int threadId = omp_get_thread_num();
+        for (unsigned int y = threadId * threadHeight; y < ((threadId + 1 < threadCount) ? ((threadId + 1) * threadHeight) : height); y++)
+        {
+
+#else
+    for (unsigned int y = 0; y < image->height(); y++)
+    {
+#endif
+
+            unsigned int yOffsetPtrFB = y * width *bytesPerPixelFB;
+            unsigned int YOffsetPtrImage = y * bytesPerLine;
+
+            unsigned int bytesPerPixelImage = 1;
+            unsigned char pixelStep = 1;
+
+            for (unsigned int x = 0; x < width / pixelStep; x += 1)
+            {
+                unsigned int xOffsetPtrImage = x * bytesPerPixelImage;
+                const unsigned char *pixelImage = ptrImage + YOffsetPtrImage + xOffsetPtrImage;
+                unsigned int xOffsetPtrFB = x * bytesPerPixelFB * pixelStep;
+                unsigned char *pixelFB = data + yOffsetPtrFB + xOffsetPtrFB;
+
+                unsigned char r, g, b;
+        if (image->pixelformat() == V4L2_PIX_FMT_SRGGB8)
+        {
+                // Bayer to RGB conversion for SRGGB8
+                if ((y % 2 == 0) && (x % 2 == 0))
+                {
+                        r = pixelImage[0];
+                        g = (pixelImage[1] + pixelImage[bytesPerLine]) / 2;
+                        b = pixelImage[bytesPerLine + 1];
+                }
+                else if ((y % 2 == 0) && (x % 2 == 1))
+                {
+                        r = (pixelImage[0] + pixelImage[2]) / 2;
+                        g = pixelImage[1];
+                        b = (pixelImage[bytesPerLine] + pixelImage[bytesPerLine + 2]) / 2;
+                }
+                else if ((y % 2 == 1) && (x % 2 == 0))
+                {
+                        r = (pixelImage[0] + pixelImage[2 * bytesPerLine]) / 2;
+                        g = pixelImage[bytesPerLine];
+                        b = (pixelImage[bytesPerLine + 1] + pixelImage[2 * bytesPerLine + 1]) / 2;
+                }
+                else
+                {
+                        r = pixelImage[0];
+                        g = (pixelImage[1] + pixelImage[bytesPerLine]) / 2;
+                        b = pixelImage[bytesPerLine + 1];
+                }
+
+                *((unsigned long *)pixelFB) = r << 16 | g << 8 | b;
+                
+            }
+        }
+    }
+
+#if _OPENMP
+    }
+#endif
+    ImageData result;
+    result.data = data;
+    result.size = dataSize;
+    return result;
+        }
+
+ImageData ImageConvertCPU::convert10BitPackedBayerToRGB888(const Image *image) const
+{
+    const unsigned int bytesPerPixelFB = 3;
+    const u_int16_t width = image->width();
+    const u_int16_t height = image->height();
+    const u_int16_t bytesPerLine = image->bytesPerLine();
+    size_t dataSize = image->height() * image->width() * bytesPerPixelFB;
+    unsigned char *data = new unsigned char[dataSize];
+
+    const unsigned char *ptrImage = image->planes()[0];
+
+#if _OPENMP
+    unsigned int threadCount = omp_get_num_procs();
+    omp_set_num_threads(threadCount);
+    unsigned int threadHeight = height/ threadCount;
+
+#pragma omp parallel
+    {
+        int threadId = omp_get_thread_num();
+        for (unsigned int y = threadId * threadHeight; y < ((threadId + 1 < threadCount) ? ((threadId + 1) * threadHeight) : height); y++)
+        {
+
+#else
+    for (unsigned int y = 0; y < image->height(); y++)
+    {
+#endif
+
+            unsigned int yOffsetPtrFB = y * width *bytesPerPixelFB;
+            unsigned int YOffsetPtrImage = y * bytesPerLine;
+
+            unsigned int bytesPerPixelImage = 5;
+            unsigned char pixelStep = 4;
+
+            for (unsigned int x = 0; x < width / pixelStep; x += 1)
+            {
+                unsigned int xOffsetPtrImage = x * bytesPerPixelImage;
+                const unsigned char *pixelImage = ptrImage + YOffsetPtrImage + xOffsetPtrImage;
+                unsigned int xOffsetPtrFB = x * bytesPerPixelFB * pixelStep;
+                unsigned char *pixelFB = data + yOffsetPtrFB + xOffsetPtrFB;
+
+                unsigned char r, g, b;
+        if (image->pixelformat() == V4L2_PIX_FMT_SRGGB10P)
+        {
+                // Bayer to RGB conversion for SRGGB8
+                if ((y % 2 == 0) && (x % 2 == 0))
+                {
+                        r = pixelImage[0];
+                        g = (pixelImage[1] + pixelImage[bytesPerLine]) / 2;
+                        b = pixelImage[bytesPerLine + 1];
+                }
+                else if ((y % 2 == 0) && (x % 2 == 1))
+                {
+                        r = (pixelImage[0] + pixelImage[2]) / 2;
+                        g = pixelImage[1];
+                        b = (pixelImage[bytesPerLine] + pixelImage[bytesPerLine + 2]) / 2;
+                }
+                else if ((y % 2 == 1) && (x % 2 == 0))
+                {
+                        r = (pixelImage[0] + pixelImage[2 * bytesPerLine]) / 2;
+                        g = pixelImage[bytesPerLine];
+                        b = (pixelImage[bytesPerLine + 1] + pixelImage[2 * bytesPerLine + 1]) / 2;
+                }
+                else
+                {
+                        r = pixelImage[0];
+                        g = (pixelImage[1] + pixelImage[bytesPerLine]) / 2;
+                        b = pixelImage[bytesPerLine + 1];
+                }
+
+                *((unsigned long *)pixelFB) = r << 16 | g << 8 | b;
+                *((unsigned long *)(pixelFB + bytesPerPixelFB)) = r << 16 | g << 8 | b;
+                *((unsigned long *)(pixelFB + 2 * bytesPerPixelFB)) = r << 16 | g << 8 | b;
+                *((unsigned long *)(pixelFB + 3 * bytesPerPixelFB)) = r << 16 | g << 8 | b;
+            }
+        }
+    }
+
+#if _OPENMP
+    }
+#endif
+    ImageData result;
+    result.data = data;
+    result.size = dataSize;
+    return result;
+        }
+

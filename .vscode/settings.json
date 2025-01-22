@@ -63,6 +63,6 @@
         "typeinfo": "cpp"
     },
     "cmake.debugConfig": {
-        "args": ["gstreamer", "--gst", "kms" , "-r", "30000", "-p", "16", "-e", "10000" ]
+        "args": ["gstreamer", "--gst", "framebuffer" , "-r", "30000", "-p", "16", "-e", "10000" ]
     }
 }
