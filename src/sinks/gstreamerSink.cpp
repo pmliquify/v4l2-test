@@ -133,6 +133,8 @@ int GstreamerSink::initKmsSink(GstElement *link)
      GstElement *videoscale = gst_element_factory_make("videoscale", "vc_scale");
 
     GstElement *kmssink = gst_element_factory_make("kmssink", "vc_sink");
+    g_object_set(G_OBJECT(kmssink), "sync", TRUE, NULL);
+
     if (!videoscale || !kmssink)
     {
         fprintf(stderr, "Could not gst_element_factory_make, terminating\n");
@@ -161,7 +163,7 @@ int GstreamerSink::initFbdev(GstElement *link)
 
     GstElement *fbdevsink = gst_element_factory_make("fbdevsink", "vc_sink");
     g_object_set(G_OBJECT (fbdevsink), "device", m_framebufferDevice.c_str(), NULL);
-    g_object_set(G_OBJECT(fbdevsink), "sync", FALSE, NULL); // Add this line
+    g_object_set(G_OBJECT(fbdevsink), "sync", FALSE, NULL);
     if (!videoscale || !fbdevsink)
     {
         fprintf(stderr, "Could not gst_element_factory_make, terminating\n");
