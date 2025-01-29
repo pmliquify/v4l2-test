@@ -60,9 +60,10 @@
         "stop_token": "cpp",
         "streambuf": "cpp",
         "thread": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "any": "cpp"
     },
     "cmake.debugConfig": {
-        "args": ["gstreamer", "--gst", "framebuffer" , "-r", "30000", "-p", "16", "-e", "10000" ]
+        "args": ["gstreamer", "--gst", "kms" , "-r", "30000", "-p", "16", "-e", "100000", "-sd", "/dev/v4l-subdev2"]
     }
 }

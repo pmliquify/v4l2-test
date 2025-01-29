@@ -130,28 +130,27 @@ int GstreamerSink::initMp4(GstElement *link)
 
 int GstreamerSink::initKmsSink(GstElement *link)
 {
-     GstElement *videoscale = gst_element_factory_make("videoscale", "vc_scale");
 
     GstElement *kmssink = gst_element_factory_make("kmssink", "vc_sink");
     g_object_set(G_OBJECT(kmssink), "sync", TRUE, NULL);
 
-    if (!videoscale || !kmssink)
+    if (!kmssink)
     {
         fprintf(stderr, "Could not gst_element_factory_make, terminating\n");
         return -1;
     }
     
-    GstCaps *capsScale2fbdevsink; 
-    capsScale2fbdevsink = gst_caps_new_simple("video/x-raw", "format",
-                                              G_TYPE_STRING, "RGB16", "width", G_TYPE_INT, m_width, "height",
-                                              G_TYPE_INT, m_height, "framerate", GST_TYPE_FRACTION, 0, 1, NULL);
+    // GstCaps *capsScale2fbdevsink; 
+    // capsScale2fbdevsink = gst_caps_new_simple("video/x-raw", "format",
+    //                                           G_TYPE_STRING, "RGB16", "width", G_TYPE_INT, m_width, "height",
+    //                                           G_TYPE_INT, m_height, "framerate", GST_TYPE_FRACTION, 0, 1, NULL);
 
 
-    gst_bin_add_many(GST_BIN(m_pipeline), videoscale, kmssink, NULL);
+    gst_bin_add_many(GST_BIN(m_pipeline), kmssink, NULL);
 
 
-    gst_element_link(link, videoscale);
-    gst_element_link_filtered(videoscale, kmssink, capsScale2fbdevsink);
+    gst_element_link(link, kmssink);
+    // gst_element_link_filtered(videoscale, kmssink, capsScale2fbdevsink);
 
 
     return 0;
