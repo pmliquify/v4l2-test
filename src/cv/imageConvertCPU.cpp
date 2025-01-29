@@ -48,6 +48,8 @@ unsigned long ImageConvertCPU::grey8BitToRGB888(const uint16_t &grey) const
 ImageData ImageConvertCPU::convert10BitGreyToRGB888(const Image *image) const
 
 {
+    unsigned int bytesPerPixelImage = 2;
+    unsigned char pixelStep = 1;
     const unsigned int bytesPerPixelFB = 3;
     size_t dataSize = image->height() * image->width() * bytesPerPixelFB;
     unsigned char *data = new unsigned char[dataSize];
@@ -69,11 +71,8 @@ ImageData ImageConvertCPU::convert10BitGreyToRGB888(const Image *image) const
     {
 #endif
 
-            unsigned int yOffsetPtrFB = y * image->width();
+            unsigned int yOffsetPtrFB = y * image->width() * bytesPerPixelFB;
             unsigned int YOffsetPtrImage = y * image->bytesPerLine();
-
-            unsigned int bytesPerPixelImage = 2;
-            unsigned char pixelStep = 4;
 
             for (unsigned int x = 0; x < image->width() / pixelStep; x += 1)
             {
@@ -82,12 +81,9 @@ ImageData ImageConvertCPU::convert10BitGreyToRGB888(const Image *image) const
                 unsigned int xOffsetPtrFB = x * bytesPerPixelFB * pixelStep;
                 unsigned char *pixelFB = data + yOffsetPtrFB + xOffsetPtrFB;
 
-                switch (bytesPerPixelFB)
-                {
-                default:
-                    *((unsigned long *)pixelFB) = grey10BitToRGB888(*(uint16_t *)pixelImage);
-                    break;
-                }
+               
+                *((unsigned long *)pixelFB) = grey10BitToRGB888(*(uint16_t *)pixelImage);
+    
             }
         }
 
