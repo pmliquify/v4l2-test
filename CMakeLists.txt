@@ -22,6 +22,15 @@ if (OPENCV_FOUND)
         include_directories(${OpenCV_INCLUDE_DIRS})
 endif()
 
+# Add GTest package
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+)
+FetchContent_MakeAvailable(googletest)
+enable_testing()
+
 # --- Librarys ----------------------------------------------------------------
 
 # Library utils
@@ -128,6 +137,22 @@ target_link_libraries(v4l2-test PRIVATE cv utils network gui sources runner)
 #         COMMAND scp ARGS v4l2-test root@imx8mp-var-dart:/home/root
 #         VERBATIM)
 
+# --- Tests ------------------------------------------------------------------
+
+add_executable(v4l2_tests
+    tests/utils_test.cpp
+    tests/cv_test.cpp
+    tests/imageConvertCPU_test.cpp
+)
+target_link_libraries(v4l2_tests
+    GTest::gtest_main
+    utils
+    cv
+    ${OpenCV_LIBS}
+)
+
+include(GoogleTest)
+gtest_discover_tests(v4l2_tests)
 
 # --- Install -----------------------------------------------------------------
 
