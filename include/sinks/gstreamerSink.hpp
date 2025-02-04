@@ -52,6 +52,7 @@ private:
     int m_width, m_height;
     std::string m_udpHost;
     int m_udpPort;
+    int m_scaleFactor;
 
     std::string m_filename;
 };

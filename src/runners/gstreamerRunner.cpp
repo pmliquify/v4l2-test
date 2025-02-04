@@ -14,6 +14,8 @@ void GstreamerRunner::printArgs()
         printArgSection("Gstreamer runner");
         BasicStreamRunner::printArgs();
         m_gstreamerSink.printArgs();
+        printArg("--downscale", "Cropping factor for downscale [2,3,4...]");
+
      
 }
 
@@ -22,6 +24,9 @@ int GstreamerRunner::setup(CommandArgs &args)
         BasicStreamRunner::setup(args);
         m_gstreamerSink.setup(args);
 
+        m_scaleFactor = args.optionInt("--downscale", 1);
+
+
         return 0;
 }
 
@@ -29,7 +34,7 @@ int GstreamerRunner::processImage(ImageSource *imageSource, Image *image)
 {
         if(m_firstRun)
         {
-                m_gstreamerSink.init(image->width(), image->height());
+                m_gstreamerSink.init(image->width()/m_scaleFactor, image->height()/m_scaleFactor);
                 m_firstRun = false;
         }
         auto start = std::chrono::high_resolution_clock::now(); // Start time
@@ -39,22 +44,22 @@ int GstreamerRunner::processImage(ImageSource *imageSource, Image *image)
         switch (image->pixelformat())
         {
                 case V4L2_PIX_FMT_Y10:
-                        data = m_imageConvertCPU.convert10BitGreyToRGB888(image);
-                        img = cv::Mat(image->height(), image->width(), CV_8UC3, data.data);
+                        data = m_imageConvertCPU.convert10BitGreyToRGB888(image, m_scaleFactor);
+                        img = cv::Mat(image->height()/m_scaleFactor, image->width()/m_scaleFactor, CV_8UC3, data.data);
                         break;
                 case V4L2_PIX_FMT_Y10P:
-                        data = m_imageConvertCPU.convert10BitPackedGreyToRGB888(image);
-                        img = cv::Mat(image->height(), image->width(), CV_8UC3, data.data);
+                        data = m_imageConvertCPU.convert10BitPackedGreyToRGB888(image, m_scaleFactor);
+                        img = cv::Mat(image->height()/m_scaleFactor, image->width()/m_scaleFactor, CV_8UC3, data.data);
                         break;
                 case V4L2_PIX_FMT_SRGGB10P:
                 case V4L2_PIX_FMT_SGBRG10P:
-                        data = m_imageConvertCPU.convert10BitPackedBayerToRGB888(image);
-                        img = cv::Mat(image->height(), image->width(), CV_8UC3, data.data);
+                        data = m_imageConvertCPU.convert10BitPackedBayerToRGB888(image, m_scaleFactor);
+                        img = cv::Mat(image->height()/m_scaleFactor, image->width()/m_scaleFactor, CV_8UC3, data.data);
                         break;
                 case V4L2_PIX_FMT_SGBRG8:
                 case V4L2_PIX_FMT_SRGGB8:
-                        data = m_imageConvertCPU.convert8BitBayerToRGB888(image);
-                        img = cv::Mat(image->height(), image->width(), CV_8UC3, data.data);
+                        data = m_imageConvertCPU.convert8BitBayerToRGB888(image, m_scaleFactor);
+                        img = cv::Mat(image->height()/m_scaleFactor, image->width()/m_scaleFactor, CV_8UC3, data.data);
                         break;
                 default:
                         std::cerr << "Format not supported" << std::endl;

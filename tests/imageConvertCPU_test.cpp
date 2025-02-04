@@ -13,12 +13,15 @@ TEST(grey10BitToRGB888, CreateEmpty) {
 
 }
 
-TEST(convert10BitGreyToRGB888, CreateEmpty) {
+TEST(convert10BitGreyToRGB888, Convert) {
     ImageConvertCPU converter;
     Image image;
     const int width = 10;
     const int height = 10;
     const int pixelSize = 2;
+    const int scaleFactor = 1;
+    const int scaleFactor2 = 2;
+
     const int imageSize = width * height * pixelSize;
     image.init(width, height, width * pixelSize, imageSize, imageSize, V4L2_PIX_FMT_Y10, 0, 0);
 
@@ -29,7 +32,7 @@ TEST(convert10BitGreyToRGB888, CreateEmpty) {
         *reinterpret_cast<u_int16_t*>(&image.planes()[0][i]) = 0xffc0u;
     }
    
-    ImageData data = converter.convert10BitGreyToRGB888(&image);
+    ImageData data = converter.convert10BitGreyToRGB888(&image,scaleFactor);
     cv::Mat img = cv::Mat(height, width, CV_8UC3, data.data);
     
 
@@ -40,7 +43,7 @@ TEST(convert10BitGreyToRGB888, CreateEmpty) {
     for (int i = 0; i < imageSize; i+=2) {
         *reinterpret_cast<u_int16_t*>(&image.planes()[0][i]) = 0b00000011000000u;
     }
-    data = converter.convert10BitGreyToRGB888(&image);
+    data = converter.convert10BitGreyToRGB888(&image, scaleFactor);
     img = cv::Mat(height, width, CV_8UC3, data.data);
     EXPECT_EQ(img.data[0], 0x00);
     EXPECT_EQ(img.data[1], 0x00);
@@ -49,11 +52,16 @@ TEST(convert10BitGreyToRGB888, CreateEmpty) {
     for (int i = 0; i < imageSize; i+=2) {
         *reinterpret_cast<u_int16_t*>(&image.planes()[0][i]) = 0b00001100000000u;
     }
-    data = converter.convert10BitGreyToRGB888(&image);
+    data = converter.convert10BitGreyToRGB888(&image, scaleFactor);
     img = cv::Mat(height, width, CV_8UC3, data.data);
     EXPECT_EQ(img.data[0], 0b00000011u);
     EXPECT_EQ(img.data[1], 0b00000011u);
     EXPECT_EQ(img.data[2], 0b00000011u);
+
+    ImageData data2 = converter.convert10BitGreyToRGB888(&image, scaleFactor2);
+    
+    EXPECT_EQ(data2.size, 3 * width * height / scaleFactor2 / scaleFactor2);
+    
 
 
 }

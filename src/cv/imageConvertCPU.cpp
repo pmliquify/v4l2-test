@@ -4,7 +4,7 @@
 #include <omp.h>
 #include <iostream>
 #include <linux/videodev2.h>
-
+#include <exception>
 uint16_t ImageConvertCPU::grey10BitToRGB565(const uint16_t &grey) const
 {
     // Grey value to RGB565 conversion
@@ -45,13 +45,16 @@ unsigned long ImageConvertCPU::grey8BitToRGB888(const uint16_t &grey) const
     return (grey << 16) | (grey << 8) | grey;
 }
 
-ImageData ImageConvertCPU::convert10BitGreyToRGB888(const Image *image) const
+ImageData ImageConvertCPU::convert10BitGreyToRGB888(const Image *image, int scaleFactor) const
 
 {
     unsigned int bytesPerPixelImage = 2;
-    unsigned char pixelStep = 1;
+    if(!(scaleFactor > 0))
+        throw std::out_of_range("ScaleFactor must be bigger 0");
+    const unsigned char pixelStep = scaleFactor;
     const unsigned int bytesPerPixelFB = 3;
-    size_t dataSize = image->height() * image->width() * bytesPerPixelFB;
+    size_t dataSize = image->height() * image->width() * bytesPerPixelFB /(size_t)pixelStep/(size_t)pixelStep;
+    std::cout << "Data size: " << dataSize << std::endl;
     unsigned char *data = new unsigned char[dataSize];
 
     const unsigned char *ptrImage = image->planes()[0];
@@ -64,21 +67,21 @@ ImageData ImageConvertCPU::convert10BitGreyToRGB888(const Image *image) const
 #pragma omp parallel
     {
         int threadId = omp_get_thread_num();
-        for (unsigned int y = threadId * threadHeight; y < ((threadId + 1 < threadCount) ? ((threadId + 1) * threadHeight) : image->height()); y++)
+        for (unsigned int y = threadId * threadHeight; y < ((threadId + 1 < threadCount) ? ((threadId + 1) * threadHeight) : image->height()); y+=pixelStep)
         {
 #else
-    for (unsigned int y = 0; y < image->height(); y++)
+    for (unsigned int y = 0; y < image->height(); y+=pixelStep)
     {
 #endif
 
-            unsigned int yOffsetPtrFB = y * image->width() * bytesPerPixelFB;
+            unsigned int yOffsetPtrFB = y * image->width() * bytesPerPixelFB/ pixelStep;
             unsigned int YOffsetPtrImage = y * image->bytesPerLine();
 
-            for (unsigned int x = 0; x < image->width() / pixelStep; x += 1)
+            for (unsigned int x = 0; x < image->width(); x += pixelStep)
             {
                 unsigned int xOffsetPtrImage = x * bytesPerPixelImage;
                 const unsigned char *pixelImage = ptrImage + YOffsetPtrImage + xOffsetPtrImage;
-                unsigned int xOffsetPtrFB = x * bytesPerPixelFB * pixelStep;
+                unsigned int xOffsetPtrFB = x * bytesPerPixelFB/ pixelStep;
                 unsigned char *pixelFB = data + yOffsetPtrFB + xOffsetPtrFB;
 
                
@@ -96,14 +99,18 @@ ImageData ImageConvertCPU::convert10BitGreyToRGB888(const Image *image) const
     return result;
 }
 
-ImageData ImageConvertCPU::convert10BitPackedGreyToRGB888(const Image *image) const
+ImageData ImageConvertCPU::convert10BitPackedGreyToRGB888(const Image *image, int scaleFactor) const
 
 {
     const unsigned int bytesPerPixelFB = 3;
+     if(!(scaleFactor > 0))
+        throw std::out_of_range("ScaleFactor must be bigger 0");
+    const unsigned char pixelStep = scaleFactor;
+
     const u_int16_t width = image->width();
     const u_int16_t height = image->height();
     const u_int16_t bytesPerLine = image->bytesPerLine();
-    size_t dataSize = image->height() * image->width() * bytesPerPixelFB;
+    size_t dataSize = image->height() * image->width() * bytesPerPixelFB /(size_t)pixelStep/(size_t)pixelStep;
     unsigned char *data = new unsigned char[dataSize];
 
     const unsigned char *ptrImage = image->planes()[0];
@@ -116,25 +123,25 @@ ImageData ImageConvertCPU::convert10BitPackedGreyToRGB888(const Image *image) co
 #pragma omp parallel
     {
         int threadId = omp_get_thread_num();
-        for (unsigned int y = threadId * threadHeight; y < ((threadId + 1 < threadCount) ? ((threadId + 1) * threadHeight) : height); y++)
+        for (unsigned int y = threadId * threadHeight; y < ((threadId + 1 < threadCount) ? ((threadId + 1) * threadHeight) : image->height()); y+=pixelStep)
         {
 
 #else
-    for (unsigned int y = 0; y < image->height(); y++)
+    for (unsigned int y = 0; y < image->height(); y+=pixelStep)
     {
 #endif
 
-            unsigned int yOffsetPtrFB = y * width * bytesPerPixelFB;
+            unsigned int yOffsetPtrFB = y * width * bytesPerPixelFB / pixelStep;
             unsigned int YOffsetPtrImage = y * bytesPerLine;
 
             unsigned int bytesPerPixelImage = 5;
             unsigned char pixelStep = 4;
 
-            for (unsigned int x = 0; x < width / pixelStep; x += 1)
+            for (unsigned int x = 0; x < width ; x += pixelStep)
             {
                 unsigned int xOffsetPtrImage = x * bytesPerPixelImage;
                 const unsigned char *pixelImage = ptrImage + YOffsetPtrImage + xOffsetPtrImage;
-                unsigned int xOffsetPtrFB = x * bytesPerPixelFB * pixelStep;
+                unsigned int xOffsetPtrFB = x * bytesPerPixelFB * pixelStep / pixelStep;
                 unsigned char *pixelFB = data + yOffsetPtrFB + xOffsetPtrFB;
 
                 *((unsigned long *)pixelFB) = grey8BitToRGB888(pixelImage[0]);
@@ -153,7 +160,7 @@ ImageData ImageConvertCPU::convert10BitPackedGreyToRGB888(const Image *image) co
     return result;
 }
 
-ImageData ImageConvertCPU::convert8BitBayerToRGB888(const Image *image) const
+ImageData ImageConvertCPU::convert8BitBayerToRGB888(const Image *image, int scaleFactor) const
 {
     const unsigned int bytesPerPixelFB = 3;
     const unsigned int bytesPerPixelImage = 1;
@@ -161,7 +168,7 @@ ImageData ImageConvertCPU::convert8BitBayerToRGB888(const Image *image) const
     const u_int16_t width = image->width();
     const u_int16_t height = image->height();
     const u_int16_t bytesPerLine = image->bytesPerLine();
-    size_t dataSize = image->height() * image->width() * bytesPerPixelFB;
+    size_t dataSize = image->height() * image->width() * bytesPerPixelFB /(size_t)pixelStep /(size_t)pixelStep;
     unsigned char *data = new unsigned char[dataSize];
 
     const unsigned char *ptrImage = image->planes()[0];
@@ -178,18 +185,18 @@ ImageData ImageConvertCPU::convert8BitBayerToRGB888(const Image *image) const
         {
 
 #else
-    for (unsigned int y = 0; y < image->height(); y++)
+    for (unsigned int y = 0; y < image->height(); y += pixelStep)
     {
 #endif
 
-            unsigned int yOffsetPtrFB = y * width * bytesPerPixelFB;
+            unsigned int yOffsetPtrFB = y * width * bytesPerPixelFB / pixelStep;
             unsigned int YOffsetPtrImage = y * bytesPerLine;
 
             for (unsigned int x = 0; x < width / pixelStep; x += pixelStep)
             {
                 unsigned int xOffsetPtrImage = x * bytesPerPixelImage;
                 const unsigned char *pixelImage = ptrImage + YOffsetPtrImage + xOffsetPtrImage;
-                unsigned int xOffsetPtrFB = x * bytesPerPixelFB * pixelStep;
+                unsigned int xOffsetPtrFB = x * bytesPerPixelFB * pixelStep / pixelStep;
                 unsigned char *pixelFB = data + yOffsetPtrFB + xOffsetPtrFB;
 
                 unsigned char r = 0, g = 0, b = 0;
@@ -265,11 +272,13 @@ ImageData ImageConvertCPU::convert8BitBayerToRGB888(const Image *image) const
     return result;
 }
 
-ImageData ImageConvertCPU::convert10BitPackedBayerToRGB888(const Image *image) const
+ImageData ImageConvertCPU::convert10BitPackedBayerToRGB888(const Image *image, int scaleFactor) const
 {
     const unsigned int bytesPerPixelFB = 3;
     const u_int16_t width = image->width();
     const u_int16_t height = image->height();
+    unsigned char pixelStep = 4;
+
     const u_int16_t bytesPerLine = image->bytesPerLine();
     size_t dataSize = image->height() * image->width() * bytesPerPixelFB;
     unsigned char *data = new unsigned char[dataSize];
@@ -284,11 +293,11 @@ ImageData ImageConvertCPU::convert10BitPackedBayerToRGB888(const Image *image) c
 #pragma omp parallel
     {
         int threadId = omp_get_thread_num();
-        for (unsigned int y = threadId * threadHeight; y < ((threadId + 1 < threadCount) ? ((threadId + 1) * threadHeight) : height); y++)
+        for (unsigned int y = threadId * threadHeight; y < ((threadId + 1 < threadCount) ? ((threadId + 1) * threadHeight) : height); y += 1)
         {
 
 #else
-    for (unsigned int y = 0; y < image->height(); y++)
+    for (unsigned int y = 0; y < image->height(); y += 1)
     {
 #endif
 
@@ -296,7 +305,6 @@ ImageData ImageConvertCPU::convert10BitPackedBayerToRGB888(const Image *image) c
             unsigned int YOffsetPtrImage = y * bytesPerLine;
 
             unsigned int bytesPerPixelImage = 5;
-            unsigned char pixelStep = 4;
 
             for (unsigned int x = 0; x < width / pixelStep; x += 1)
             {
