@@ -61,7 +61,10 @@ TEST(convert10BitGreyToRGB888, Convert) {
     ImageData data2 = converter.convert10BitGreyToRGB888(&image, scaleFactor2);
     
     EXPECT_EQ(data2.size, 3 * width * height / scaleFactor2 / scaleFactor2);
+
+    ImageData data4 = converter.convert10BitGreyToRGB888(&image, 4);
     
+    EXPECT_EQ(data4.size, 3 * (width / 4)* (height  / 4));
 
 
 }
