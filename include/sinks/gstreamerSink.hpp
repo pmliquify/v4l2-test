@@ -10,11 +10,12 @@ class GstreamerSink: CommandArgsConsumer
 public:
     enum SinkType
     {
+        NONE,
         FBDEV,
         UDP,
         FILE,
         KMS,
-        NONE
+        AUTOVIDEO
     };
 
     GstreamerSink();
@@ -26,6 +27,7 @@ public:
     int initFbdev(GstElement *link);
     int initMp4(GstElement *link);
     int initKmsSink(GstElement *link);
+    int initAutoVideoSink(GstElement *link);
 
     int pushFrame(cv::Mat &frame);
     static void initGStreamer(); // Add this line

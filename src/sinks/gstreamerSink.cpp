@@ -12,7 +12,7 @@ GstreamerSink::~GstreamerSink()
 void GstreamerSink::printArgs()
 {
         printArgSection("GstreamerSink");
-        printArg("--gst", "Gstreamer sink [file,udp,framebuffer]");
+        printArg("--gst", "Gstreamer sink [file,udp,framebuffer,kms,autovideo]");
         printArg("--udphost", "Host ip for the udp sink");
         printArg("--udpport", "Port for the udp sink");
         printArg("--filename", "Filename for the file sink");
@@ -52,6 +52,10 @@ int GstreamerSink::setup(CommandArgs &args)
     else if (optionGstreamerSink == "kms")
     {
         m_sink = SinkType::KMS;
+    }
+    else if (optionGstreamerSink == "autovideo")
+    {
+        m_sink = SinkType::AUTOVIDEO;
     }
     else
     {
@@ -155,6 +159,20 @@ int GstreamerSink::initKmsSink(GstElement *link)
 
     return 0;
 }
+int GstreamerSink::initAutoVideoSink(GstElement *link)
+{
+    GstElement *autovideosink = gst_element_factory_make("autovideosink", "vc_sink");
+    if (!autovideosink)
+    {
+        fprintf(stderr, "Could not gst_element_factory_make, terminating\n");
+        return -1;
+    }
+    
+    gst_bin_add_many(GST_BIN(m_pipeline), autovideosink, NULL);
+
+    gst_element_link(link, autovideosink);
+    return 0;
+}
 
 int GstreamerSink::initFbdev(GstElement *link)
 {
@@ -241,6 +259,9 @@ int GstreamerSink::init(int width, int height)
         break;
     case SinkType::KMS:
         initKmsSink(videoconvert);
+        break;
+    case SinkType::AUTOVIDEO:
+        initAutoVideoSink(videoconvert);
         break;
     default:
         return -1;
