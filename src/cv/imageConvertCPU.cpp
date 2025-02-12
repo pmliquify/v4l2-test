@@ -108,8 +108,8 @@ ImageData ImageConvertCPU::convert10BitPackedGreyToRGB888(const Image *image, in
     const unsigned int bytesPerPixelFB = 3;
     if (!(scaleFactor > 0))
         throw std::out_of_range("ScaleFactor must be bigger 0");
-    const  unsigned char pixelStep = 4;
-    const  unsigned int bytesPerPixelImage = 5;
+    const unsigned char pixelStep = 5;
+    const unsigned int bytesPerPixelImage = 4;
 
     size_t targetWidth = image->width() / scaleFactor;
     size_t targetHeight = image->height() / scaleFactor;
@@ -143,12 +143,11 @@ ImageData ImageConvertCPU::convert10BitPackedGreyToRGB888(const Image *image, in
             unsigned int yOffsetPtrFB = y * targetWidth * bytesPerPixelFB;
             unsigned int YOffsetPtrImage = y * bytesPerLine * scaleFactor;
 
-
-            for (unsigned int x = 0; x < targetWidth; x += bytesPerPixelImage)
+            for (double x = 0; x < targetWidth; x += bytesPerPixelImage)
             {
-                unsigned int xOffsetPtrImage = x * scaleFactor ;
+                unsigned int xOffsetPtrImage = x * scaleFactor * pixelStep / bytesPerPixelImage;
                 const unsigned char *pixelImage = ptrImage + YOffsetPtrImage + xOffsetPtrImage;
-                unsigned int xOffsetPtrFB = x * bytesPerPixelFB  / bytesPerPixelImage ;
+                unsigned int xOffsetPtrFB = x * bytesPerPixelFB;
                 unsigned char *pixelFB = data + yOffsetPtrFB + xOffsetPtrFB;
 
                 *((unsigned long *)pixelFB) = grey8BitToRGB888(pixelImage[0]);
