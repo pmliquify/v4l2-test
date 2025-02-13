@@ -69,44 +69,68 @@ int GstreamerSink::setup(CommandArgs &args)
 
 int GstreamerSink::initUdp(GstElement *link)
 {
-    GstElement *x264enc = gst_element_factory_make("x264enc", "vc_x264enc");
-    g_object_set(G_OBJECT(x264enc), 
-                "bitrate", 4000,          // Increased bitrate for better quality
-                "speed-preset", 6,        // medium preset (0=placebo, 6=medium, 9=veryfast)
-                "tune", 0,               // zerolatency tuning for streaming
-                "key-int-max", 60,      // Keyframe every 2 seconds at 30fps
+    // Create elements with standard naming
+    GstElement *queue1 = gst_element_factory_make("queue", "queue1");
+    GstElement *x264enc = gst_element_factory_make("x264enc", "x264enc");
+    GstElement *queue2 = gst_element_factory_make("queue", "queue2");
+    GstElement *h264pay = gst_element_factory_make("rtph264pay", "pay0");
+    GstElement *udpsink = gst_element_factory_make("udpsink", "udpsink0");
+
+    // Configure queue elements for better buffering
+    g_object_set(G_OBJECT(queue1),
+                "max-size-buffers", 0,
+                "max-size-bytes", 0,
+                "max-size-time", 0,
+                "leaky", 2, // downstream
                 NULL);
 
-    // Add queue elements to prevent pipeline stalls
-    GstElement *encqueue = gst_element_factory_make("queue", "enc_queue");
-    GstElement *payqueue = gst_element_factory_make("queue", "pay_queue");
-    
-    GstElement *rtph264pay = gst_element_factory_make("rtph264pay", "vc_rtph264pay");
-    g_object_set(G_OBJECT(rtph264pay),
-                "config-interval", 1,     // Send codec config with every keyframe
-                "pt", 96,                 // Standard payload type for H.264y
+    g_object_set(G_OBJECT(queue2),
+                "max-size-buffers", 0,
+                "max-size-bytes", 0,
+                "max-size-time", 0,
+                "leaky", 2, // downstream
                 NULL);
 
-    GstElement *udpsink = gst_element_factory_make("udpsink", "vc_sink");
-    g_object_set(G_OBJECT(udpsink), 
+    // Configure x264enc for low-latency streaming
+    g_object_set(G_OBJECT(x264enc),
+                "tune", 4,           // zero-latency
+                "speed-preset", 1,   // ultrafast
+                "bitrate", 2000,     // 2Mbps
+                "key-int-max", 30,   // Keyframe every 30 frames
+                "threads", 4,        // Use 4 threads for encoding
+                NULL);
+
+    // Configure RTP payloader
+    g_object_set(G_OBJECT(h264pay),
+                "config-interval", -1,  // Send config with every key frame
+                "pt", 96,              // Payload type 96
+                NULL);
+
+    // Configure UDP sink
+    g_object_set(G_OBJECT(udpsink),
                 "host", m_udpHost.c_str(),
                 "port", m_udpPort,
-                "buffer-size", 41943040,  // Increase buffer size to 40MB
-                "max-lateness", 500000000,// Allow larger timing variations (500ms)
-                "qos", TRUE,             // Enable QoS events
+                "sync", FALSE,          // Don't sync on the clock
+                "async", FALSE,         // Don't async on the clock
                 NULL);
 
-    gst_bin_add_many(GST_BIN(m_pipeline), encqueue, x264enc, payqueue, rtph264pay, udpsink, NULL);
+    if (!queue1 || !x264enc || !queue2 || !h264pay || !udpsink) {
+        fprintf(stderr, "Failed to create one or more elements\n");
+        return -1;
+    }
 
-    // Link elements with queues
-    gst_element_link(link, encqueue);
-    gst_element_link(encqueue, x264enc);
-    gst_element_link(x264enc, payqueue);
-    gst_element_link(payqueue, rtph264pay);
-    gst_element_link(rtph264pay, udpsink);
+    // Add elements to pipeline
+    gst_bin_add_many(GST_BIN(m_pipeline), queue1, x264enc, queue2, h264pay, udpsink, NULL);
+
+    // Link elements
+    if (!gst_element_link_many(link, queue1, x264enc, queue2, h264pay, udpsink, NULL)) {
+        fprintf(stderr, "Failed to link elements\n");
+        return -1;
+    }
 
     return 0;
 }
+
 int GstreamerSink::initMp4(GstElement *link)
 {
    
@@ -190,7 +214,7 @@ int GstreamerSink::initFbdev(GstElement *link)
     GstCaps *capsScale2fbdevsink; 
     capsScale2fbdevsink = gst_caps_new_simple("video/x-raw", "format",
                                               G_TYPE_STRING, "RGB16", "width", G_TYPE_INT, m_width, "height",
-                                              G_TYPE_INT, m_height, "framerate", GST_TYPE_FRACTION, 0, 1, NULL);
+                                              G_TYPE_INT, m_height, NULL);
 
 
     gst_bin_add_many(GST_BIN(m_pipeline), videoscale, fbdevsink, NULL);

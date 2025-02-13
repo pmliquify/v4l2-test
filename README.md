@@ -87,3 +87,19 @@ Format (width: 1920, height: 1080, pixelformat: RG10, colorspace: SRGB)
 ```
 
 Use the `-p` to additionaly print out one line if image information to the console.
+
+
+# Gstreamer
+
+## Gstreamer UDP 
+
+Streaming over ethernet is possible by udp 
+First, on the host the server has to be started by 
+```bash
+gst-launch-1.0 udpsrc port=5000 caps="application/x-rtp, media=(string)video, encoding-name=(string)H264" ! rtph264depay ! avdec_h264 ! videoconvert ! autovideosink
+```
+On the remote device, the v4l2-test tool has to be started by the command 
+
+```bash
+./v4l2-test gstreamer --gst udp --udphost=<IP HOST> --port 5000
+```
