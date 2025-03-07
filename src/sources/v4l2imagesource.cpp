@@ -410,7 +410,7 @@ int V4L2ImageSource::setControl(unsigned int id, int value)
 
 int V4L2ImageSource::setExtControl(unsigned int id, unsigned int type, int value)
 {
-	struct v4l2_ext_control  ext_control;
+	struct v4l2_ext_control ext_control;
         memset(&ext_control, 0, sizeof(ext_control));
         ext_control.id = id;
         switch (type) {
@@ -431,7 +431,7 @@ int V4L2ImageSource::setExtControl(unsigned int id, unsigned int type, int value
 
 int V4L2ImageSource::setControl(std::string name, int value)
 {
-        struct v4l2_queryctrl  queryctrl;
+        struct v4l2_queryctrl queryctrl;
         queryctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
         while(0 == ioctl(m_subDeviceFd, VIDIOC_QUERYCTRL, &queryctrl)) {
                 if (0 == name.compare((const char *)queryctrl.name)) {

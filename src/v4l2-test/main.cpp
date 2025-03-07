@@ -6,7 +6,8 @@
 #include <runners/isprunner.hpp>
 #include <runners/noisetestrunner.hpp>
 #include <runners/socketclientrunner.hpp>
-#include <csignal> // for signal handling
+#include <csignal>
+#include <unistd.h>
 
 ImageSourceRunnerMap runnerMap;
 
