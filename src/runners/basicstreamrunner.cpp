@@ -17,7 +17,9 @@ BasicStreamRunner::BasicStreamRunner() :
         m_height(0),
         m_singleAcquisition(false),
         m_imageCount(-1),
-        m_timeout(1000000)
+        m_timeout(1000000),
+        m_fpsStartSequence(0),
+        m_fpsStartTimestamp(0)
 {
 }
 
@@ -69,8 +71,22 @@ int BasicStreamRunner::processImage(ImageSource *imageSource, Image *image)
                 ImagePrint::print(image, m_print, m_x, m_y, m_lastTimestamp, 10);
                 m_lastTimestamp = image->timestamp();
         } else {
-                printf(">");
+                printf("<");
                 fflush(stdout);
+
+                if (m_fpsStartTimestamp == 0) {
+                        m_fpsStartTimestamp = image->timestamp();
+                        m_fpsStartSequence = image->sequence();
+
+                } else if (image->timestamp() - m_fpsStartTimestamp >= 1000) {
+                        float fps = 1000.0 * (image->sequence() - m_fpsStartSequence) /
+                                (image->timestamp() - m_fpsStartTimestamp);
+                        printf(" %.1f fps\n", fps);
+                        fflush(stdout);
+
+                        m_fpsStartTimestamp = image->timestamp();
+                        m_fpsStartSequence = image->sequence();
+                }
         }
 
         if (m_fb) {

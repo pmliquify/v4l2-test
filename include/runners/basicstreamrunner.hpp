@@ -33,6 +33,8 @@ protected:
         bool          m_singleAcquisition;
         int           m_imageCount;
         int           m_timeout;
+        int           m_fpsStartSequence;
+        int           m_fpsStartTimestamp;
 
         virtual int processImage(ImageSource *imageSource, Image *image);
 };
