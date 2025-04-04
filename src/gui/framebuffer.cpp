@@ -7,7 +7,9 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <linux/videodev2.h>
+#if _OPENMP
 #include <omp.h>
+#endif
 #include <linux/kd.h>
 #include <linux/vt.h>
 

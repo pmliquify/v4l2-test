@@ -1,7 +1,9 @@
 
 #include <cv/imageConvertCPU.hpp>
 #include <cstdint>
+#if _OPENMP
 #include <omp.h>
+#endif
 #include <iostream>
 #include <linux/videodev2.h>
 #include <exception>
@@ -388,6 +390,31 @@ ImageData ImageConvertCPU::convert10BitPackedBayerToRGB888(const Image *image, i
 #endif
     ImageData result;
     result.data = data;
+    result.size = dataSize;
+    return result;
+}
+ImageData ImageConvertCPU::convert12BitPackedBayerToRGB888(const Image *image, int scaleFactor) const
+{
+
+
+    // Entpackte Bilddaten als 16-Bit Matrix
+    size_t dataSize = image->height() * image->width() * 2;
+    uint16_t* data = new uint16_t[dataSize];
+
+    const unsigned char *ptrImage = image->planes()[0];
+
+    size_t idx = 0;
+    for (size_t i = 0; i < image->imageSize(); i += 3) {
+        uint16_t pixel1 = (ptrImage[i] << 4) | (ptrImage[i + 2] & 0x0F);  // Erstes 12-Bit-Pixel
+        uint16_t pixel2 = (ptrImage[i + 1] << 4) | (ptrImage[i + 2] >> 4); // Zweites 12-Bit-Pixel
+
+        data[idx++] = pixel1 << 4;  // In 16-Bit konvertieren (Skalierung auf 16 Bit)
+        data[idx++] = pixel2 << 4;
+    }
+
+
+    ImageData result;
+    result.data = reinterpret_cast<unsigned char*>(data);
     result.size = dataSize;
     return result;
 }

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5.0)
-
+option (ENABLE_TESTS "Enable tests" OFF)
 project(V4L2Test 
         VERSION 0.3.0
         DESCRIPTION "V4L2 testing application"
@@ -15,21 +15,20 @@ configure_file (
 
 find_package(OpenMP)
 
-find_package(OpenCV 4.6.0)
+# OpenCV 4.5.0 or newer/greater
+find_package(OpenCV REQUIRED)
+if(OpenCV_VERSION VERSION_LESS "4.5.0")
+    message(FATAL_ERROR "OpenCV version must be at least 4.5.0")
+endif()
+
+
 if (OPENCV_FOUND)
         add_compile_definitions(WITH_GUI)
         # add_compile_definitions(WITH_CCM)
         include_directories(${OpenCV_INCLUDE_DIRS})
 endif()
 
-# Add GTest package
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
-)
-FetchContent_MakeAvailable(googletest)
-enable_testing()
+
 
 # --- Librarys ----------------------------------------------------------------
 
@@ -83,6 +82,7 @@ pkg_search_module(GSTREAMER_VIDEO REQUIRED IMPORTED_TARGET gstreamer-video-1.0>=
 add_library(sinks
         STATIC
         src/sinks/gstreamerSink.cpp
+        src/sinks/imagesaversink.cpp
        )
 target_include_directories(sinks PUBLIC include  ${GSTREAMER_INCLUDE_DIRS} ${GSTREAMER_APP_INCLUDE_DIRS} )
 target_link_libraries(sinks PRIVATE cv utils ${GSTREAMER_APP_LIBRARIES} ${GSTREAMER_LIBRARIES})
@@ -115,6 +115,7 @@ endif()
 add_library(runner
         STATIC
         src/runners/basicstreamrunner.cpp
+        src/runners/imagesaverrunner.cpp
         src/runners/streamrunner.cpp
         src/runners/isprunner.cpp
         src/runners/noisetestrunner.cpp
@@ -139,6 +140,17 @@ target_link_libraries(v4l2-test PRIVATE cv utils network gui sources runner)
 
 # --- Tests ------------------------------------------------------------------
 
+if (ENABLE_TESTS)
+      
+# Add GTest package
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+)
+FetchContent_MakeAvailable(googletest)
+enable_testing()
+
 add_executable(v4l2_tests
     tests/utils_test.cpp
     tests/cv_test.cpp
@@ -153,6 +165,8 @@ target_link_libraries(v4l2_tests
 
 include(GoogleTest)
 gtest_discover_tests(v4l2_tests)
+
+endif()
 
 # --- Install -----------------------------------------------------------------
 
