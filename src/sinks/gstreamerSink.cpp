@@ -39,6 +39,21 @@ int GstreamerSink::setup(CommandArgs &args)
         }
         m_udpPort = args.optionInt("--udpport", 5000);
     }
+    else if (optionGstreamerSink == "udprk")
+    {
+        m_sink = SinkType::UDP_RK;
+        m_udpHost = args.optionString("--udphost", "");
+        if(m_udpHost.empty())
+        {
+            std::cerr << "UDP host not provided" << std::endl;
+            return -1;
+        }
+        if(!args.exists("--udpport"))
+        {
+            std::cout << "UDP port not provided, using default port 5000" << std::endl;
+        }
+        m_udpPort = args.optionInt("--udpport", 5000);
+    }
     else if (optionGstreamerSink == "file")
     {
         m_sink = SinkType::FILE;
@@ -130,7 +145,69 @@ int GstreamerSink::initUdp(GstElement *link)
 
     return 0;
 }
+int GstreamerSink::initUdpRK(GstElement *link)
+{
+    // Create elements with standard naming
+    GstElement *queue1 = gst_element_factory_make("queue", "queue1");
+    GstElement *mpph264enc = gst_element_factory_make("mpph264enc", "mpph264enc");
+    GstElement *queue2 = gst_element_factory_make("queue", "queue2");
+    GstElement *h264pay = gst_element_factory_make("rtph264pay", "pay0");
+    GstElement *udpsink = gst_element_factory_make("udpsink", "udpsink0");
 
+    // Configure queue elements for better buffering
+    g_object_set(G_OBJECT(queue1),
+                "max-size-buffers", 0,
+                "max-size-bytes", 0,
+                "max-size-time", 0,
+                "leaky", 2, // downstream
+                NULL);
+
+    g_object_set(G_OBJECT(queue2),
+                "max-size-buffers", 0,
+                "max-size-bytes", 0,
+                "max-size-time", 0,
+                "leaky", 2, // downstream
+                NULL);
+
+    // Configure mpph264enc for low-latency streaming
+    g_object_set(G_OBJECT(mpph264enc),
+                "tune", 4,           // zero-latency
+                "speed-preset", 1,   // ultrafast
+                "bitrate", 2000,     // 2Mbps
+                "key-int-max", 30,   // Keyframe every 30 frames
+                "threads", 4,        // Use 4 threads for encoding
+                NULL);
+
+    // Configure RTP payloader
+    g_object_set(G_OBJECT(h264pay),
+                "config-interval", -1,  // Send config with every key frame
+                "pt", 96,              // Payload type 96
+                NULL);
+
+    // Configure UDP sink
+    g_object_set(G_OBJECT(udpsink),
+                "host", m_udpHost.c_str(),
+                "port", m_udpPort,
+                "sync", FALSE,          // Don't sync on the clock
+                "async", FALSE,         // Don't async on the clock
+                NULL);
+
+    if (!queue1 || !mpph264enc || !queue2 || !h264pay || !udpsink) {
+        fprintf(stderr, "Failed to create one or more elements\n");
+        return -1;
+    }
+
+    // Add elements to pipeline
+    gst_bin_add_many(GST_BIN(m_pipeline), queue1, mpph264enc, queue2, h264pay, udpsink, NULL);
+
+    // Link elements
+    if (!gst_element_link_many(link, queue1, mpph264enc, queue2, h264pay, udpsink, NULL)) {
+        fprintf(stderr, "Failed to link elements\n");
+        return -1;
+    }
+
+    return 0;
+}
 int GstreamerSink::initMp4(GstElement *link)
 {
    
@@ -278,6 +355,9 @@ int GstreamerSink::init(int width, int height)
     case SinkType::UDP:
         initUdp(videoconvert);
         break;
+    case SinkType::UDP_RK:
+        initUdpRK(videoconvert);
+        break;
     case SinkType::FILE:
         initMp4(videoconvert);
         break;
@@ -342,7 +422,13 @@ int GstreamerSink::pushFrame(cv::Mat &frame)
         GST_BUFFER_PTS(buffer) = gst_util_uint64_scale(gst_clock_get_time(gst_pipeline_get_clock(GST_PIPELINE(m_pipeline))), GST_SECOND, GST_SECOND);
         GST_BUFFER_DURATION(buffer) = gst_util_uint64_scale(1, GST_SECOND, 10); // Assuming 10 FPS
     }
-    else if (m_sink == SinkType::UDP)
+    else if (m_sink == SinkType::UDP || m_sink == SinkType::UDP_RK)
+    {
+        // Set timestamp and duration
+        GST_BUFFER_PTS(buffer) = gst_util_uint64_scale(gst_clock_get_time(gst_pipeline_get_clock(GST_PIPELINE(m_pipeline))), GST_SECOND, GST_SECOND);
+        GST_BUFFER_DURATION(buffer) = gst_util_uint64_scale(1, GST_SECOND, 10); // Assuming 10 FPS
+    }
+    else if (m_sink == SinkType::FBDEV)
     {
         // Set timestamp and duration
         GST_BUFFER_PTS(buffer) = gst_util_uint64_scale(gst_clock_get_time(gst_pipeline_get_clock(GST_PIPELINE(m_pipeline))), GST_SECOND, GST_SECOND);

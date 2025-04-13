@@ -13,6 +13,7 @@ public:
         NONE,
         FBDEV,
         UDP,
+        UDP_RK,
         FILE,
         KMS,
         AUTOVIDEO
@@ -24,6 +25,8 @@ public:
     int setup(CommandArgs &args);
     int init(int width, int height);
     int initUdp(GstElement *link);
+    int initUdpRK(GstElement *link);
+
     int initFbdev(GstElement *link);
     int initMp4(GstElement *link);
     int initKmsSink(GstElement *link);
