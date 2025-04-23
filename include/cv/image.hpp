@@ -21,6 +21,7 @@ public:
         void setImageSize(u_int32_t size) { m_imageSize = size; }
         u_int32_t bytesUsed() const { return m_bytesUsed; }
         u_int32_t pixelformat() const { return m_pixelformat; }
+        char *pixelformatString() const;
         u_int32_t sequence() const { return m_sequence; }
         u_int64_t timestamp() const { return m_timestamp; }
         u_int16_t shift() const { return m_shift; }
