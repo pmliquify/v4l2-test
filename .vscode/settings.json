@@ -61,9 +61,14 @@
         "streambuf": "cpp",
         "thread": "cpp",
         "typeinfo": "cpp",
-        "any": "cpp"
+        "any": "cpp",
+        "forward_list": "cpp",
+        "unordered_set": "cpp",
+        "optional": "cpp",
+        "cinttypes": "cpp",
+        "variant": "cpp"
     },
     "cmake.debugConfig": {
-        "args": ["gstreamer", "--gst", "kms" , "-r", "10000", "-p", "16", "-e", "100000", "-sd", "/dev/v4l-subdev2", "--downscale", "3"]
+        "args": ["imagesaver", "--gst", "kms" , "-r", "10000", "-p", "16", "-e", "100000", "-sd", "/dev/v4l-subdev2", "--downscale", "3" , "--count", "20"]
     }
 }

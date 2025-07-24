@@ -14,6 +14,8 @@ git clone https://github.com/pmliquify/v4l2-test.git
 Gstreamer Support 
 
 ```bash
+#For opencv support 
+sudo apt-get install python3-opencv
 # install a missing dependency
 sudo apt-get install libx264-dev libjpeg-dev
 # install the remaining plugins

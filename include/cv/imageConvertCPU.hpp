@@ -6,6 +6,7 @@
 struct ImageData {
     unsigned char* data;
     size_t size;
+    ImageData() : data(nullptr), size(0) {}
 };
 class ImageConvertCPU
 {
@@ -19,6 +20,7 @@ class ImageConvertCPU
         ImageData convert10BitPackedGreyToRGB888(const Image *image, int scaleFactor) const;
         ImageData convert10BitPackedBayerToRGB888(const Image *image, int scaleFactor) const;
         ImageData convert8BitBayerToRGB888(const Image *image, int scaleFactor) const;
+        ImageData convert12BitPackedBayerToRGB888(const Image *image, int scaleFactor) const;
 
 
 };

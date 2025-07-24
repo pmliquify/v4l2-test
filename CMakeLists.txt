@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 3.5.0)
+option (ENABLE_TESTS "Enable tests" OFF)
+option (ENABLE_GUI "Enable opencv gui (legacy)" OFF)
 
 project(V4L2Test 
         VERSION 0.3.0
@@ -15,21 +17,22 @@ configure_file (
 
 find_package(OpenMP)
 
-find_package(OpenCV 4.6.0)
-if (OPENCV_FOUND)
+# OpenCV 4.5.0 or newer/greater
+find_package(OpenCV REQUIRED)
+if(OpenCV_VERSION VERSION_LESS "4.5.0")
+    message(FATAL_ERROR "OpenCV version must be at least 4.5.0")
+endif()
+
+if(OPENCV_FOUND AND ENABLE_GUI)
         add_compile_definitions(WITH_GUI)
+endif()
+
+if (OPENCV_FOUND)
         # add_compile_definitions(WITH_CCM)
         include_directories(${OpenCV_INCLUDE_DIRS})
 endif()
 
-# Add GTest package
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
-)
-FetchContent_MakeAvailable(googletest)
-enable_testing()
+
 
 # --- Librarys ----------------------------------------------------------------
 
@@ -83,20 +86,20 @@ pkg_search_module(GSTREAMER_VIDEO REQUIRED IMPORTED_TARGET gstreamer-video-1.0>=
 add_library(sinks
         STATIC
         src/sinks/gstreamerSink.cpp
+        src/sinks/imagesaversink.cpp
        )
 target_include_directories(sinks PUBLIC include  ${GSTREAMER_INCLUDE_DIRS} ${GSTREAMER_APP_INCLUDE_DIRS} )
 target_link_libraries(sinks PRIVATE cv utils ${GSTREAMER_APP_LIBRARIES} ${GSTREAMER_LIBRARIES})
 if (OPENCV_FOUND)
         target_link_libraries(sinks PUBLIC ${OpenCV_LIBS})
 endif()
-
-# Library gui
+        # Library gui
 add_library(gui
         STATIC
         src/gui/framebuffer.cpp)
 target_include_directories(gui PUBLIC include)
 target_link_libraries(gui PRIVATE cv sources)
-if (OPENCV_FOUND)
+if (OPENCV_FOUND AND ENABLE_GUI)
         target_sources(gui PRIVATE 
                 src/gui/opencv/viewer.cpp
                 src/gui/opencv/convert.cpp
@@ -115,13 +118,14 @@ endif()
 add_library(runner
         STATIC
         src/runners/basicstreamrunner.cpp
+        src/runners/imagesaverrunner.cpp
         src/runners/streamrunner.cpp
         src/runners/isprunner.cpp
         src/runners/noisetestrunner.cpp
         src/runners/gstreamerRunner.cpp
         src/runners/socketclientrunner.cpp)
 target_include_directories(runner PUBLIC include ${GSTREAMER_INCLUDE_DIRS} ${GSTREAMER_APP_INCLUDE_DIRS} )
-target_link_libraries(runner PRIVATE cv utils network gui sources sinks)
+target_link_libraries(runner PRIVATE cv utils gui network sources sinks)
 
 
 # --- Executables -------------------------------------------------------------
@@ -130,7 +134,7 @@ target_link_libraries(runner PRIVATE cv utils network gui sources sinks)
 add_executable(v4l2-test 
         src/v4l2-test/main.cpp)
 target_include_directories(v4l2-test PRIVATE ${PROJECT_BINARY_DIR}/include)
-target_link_libraries(v4l2-test PRIVATE cv utils network gui sources runner)
+target_link_libraries(v4l2-test PRIVATE cv utils gui network sources runner)
 
 # add_custom_command(
 #         TARGET v4l2-test POST_BUILD 
@@ -138,6 +142,17 @@ target_link_libraries(v4l2-test PRIVATE cv utils network gui sources runner)
 #         VERBATIM)
 
 # --- Tests ------------------------------------------------------------------
+
+if (ENABLE_TESTS)
+      
+# Add GTest package
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+)
+FetchContent_MakeAvailable(googletest)
+enable_testing()
 
 add_executable(v4l2_tests
     tests/utils_test.cpp
@@ -153,6 +168,8 @@ target_link_libraries(v4l2_tests
 
 include(GoogleTest)
 gtest_discover_tests(v4l2_tests)
+
+endif()
 
 # --- Install -----------------------------------------------------------------
 
