@@ -1,0 +1,82 @@
+@startuml "V4L2Test Classes"
+
+package "cv" {
+    class Image
+    class ImagePrint
+    class ImageStats
+}
+
+' package "network" {
+'     class Socket
+'     class ImageSocketClient
+'     class ImageSocketServer
+' }
+
+' package "utils" {
+'     class CommandArgs
+'     class CommandArgsConsumer {
+'         {abstract} + void printArgs()
+'         {abstract} + int setup()
+'     }
+' }
+
+' package "gui" {
+'     class FrameBuffer
+'     class Viewer
+' }
+
+package "sources" {
+    class AutoExposure
+    abstract class ImageSource {
+        + Image *getNextImage()
+    }
+    class V4L2Image
+    class V4L2ImageSource
+    class SocketServerSource
+}
+
+package "runners" {
+    abstract class ImageSourceRunner {
+       + int run(ImageSource *)
+    }
+    class BasicStreamRunner
+    class IspRunner
+    class NoiseTestRunner
+    class SocketClientRunner
+    class StreamRunner
+}
+
+Image <|-- V4L2Image
+Image <.. ImagePrint
+Image <.. ImageStats
+Image <.. ImageSource
+
+' CommandArgs <.. CommandArgsConsumer
+' CommandArgsConsumer <|-- ImageSource
+' CommandArgsConsumer <|-- ImageSourceRunner
+
+ImageSource <|-- SocketServerSource
+ImageSource <.. ImageSourceRunner
+ImageSource <.. AutoExposure
+ImageSource <|-- V4L2ImageSource
+V4L2Image <.. V4L2ImageSource
+ImageSourceRunner <|-- NoiseTestRunner
+ImageSourceRunner <|-- BasicStreamRunner
+BasicStreamRunner <|-- StreamRunner
+BasicStreamRunner <|-- IspRunner
+
+AutoExposure <.. IspRunner
+
+' ImageSource <.. Viewer
+' FrameBuffer <.. BasicStreamRunner
+' Viewer <.. BasicStreamRunner
+
+' Image <.. ImageSocketClient
+' Image <.. ImageSocketServer
+' Socket <|-- ImageSocketClient
+' Socket <|-- ImageSocketServer
+' ImageSocketServer <.. SocketServerSource
+' ImageSocketClient <.. SocketClientRunner
+' BasicStreamRunner <|-- SocketClientRunner
+
+@enduml
