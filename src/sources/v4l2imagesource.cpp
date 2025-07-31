@@ -368,7 +368,9 @@ int V4L2ImageSource::setExposure(int exposure)
 
 int V4L2ImageSource::setGain(int gain)
 {
-        return setControl("Gain", gain);
+        if(setControl("Gain", gain, false)==-1)
+                return setControl("Analogue Gain", gain ); 
+        return 0;
 }
 
 int V4L2ImageSource::setBlackLevel(int blackLevel)
@@ -396,19 +398,19 @@ int V4L2ImageSource::setFrameRate(int frameRate)
         return setControl("Frame Rate", frameRate);
 }
 
-int V4L2ImageSource::setControl(unsigned int id, int value)
+int V4L2ImageSource::setControl(unsigned int id, int value, bool printError)
 {
         struct v4l2_control control;
         control.id = id;
         control.value = value;
         if (-1 == ioctl(m_deviceFd, VIDIOC_S_CTRL, &control)) {
-                handleErrorForIoctl(VIDIOC_S_CTRL, errno);
+                if(printError) handleErrorForIoctl(VIDIOC_S_CTRL, errno);
                 return -1;
         }
         return 0;
 }
 
-int V4L2ImageSource::setExtControl(unsigned int id, unsigned int type, int value)
+int V4L2ImageSource::setExtControl(unsigned int id, unsigned int type, int value, bool printError)
 {
 	struct v4l2_ext_control  ext_control;
         memset(&ext_control, 0, sizeof(ext_control));
@@ -423,13 +425,13 @@ int V4L2ImageSource::setExtControl(unsigned int id, unsigned int type, int value
         ext_controls.count      = 1;
         ext_controls.controls   = &ext_control;
         if (-1 == ioctl(m_subDeviceFd, VIDIOC_S_EXT_CTRLS, &ext_controls)) {
-                handleErrorForIoctl(VIDIOC_S_EXT_CTRLS, errno);
+                if(printError) handleErrorForIoctl(VIDIOC_S_EXT_CTRLS, errno);
                 return -1;
         }
         return 0;
 }
 
-int V4L2ImageSource::setControl(std::string name, int value)
+int V4L2ImageSource::setControl(std::string name, int value, bool printError)
 {
         struct v4l2_queryctrl  queryctrl;
         queryctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
@@ -441,7 +443,7 @@ int V4L2ImageSource::setControl(std::string name, int value)
                 }
                 queryctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
         }
-        printf("Control (name: '%s') not found!\n", name.c_str());
+        if(printError) printf("Control (name: '%s') not found!\n", name.c_str());
         return -1;
 }
 

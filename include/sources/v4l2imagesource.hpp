@@ -40,9 +40,9 @@ protected:
         int m_deviceFd;
         int m_subDeviceFd;
         
-        int setControl(unsigned int id, int value);
-        int setExtControl(unsigned int id, unsigned int type, int value);
-        int setControl(std::string name, int value);
+        int setControl(unsigned int id, int value, bool printError = true);
+        int setExtControl(unsigned int id, unsigned int type, int value, bool printError = true);
+        int setControl(std::string name, int value, bool printError = true);
 
 private:
         struct v4l2_format m_format;
