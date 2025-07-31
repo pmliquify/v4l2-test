@@ -67,9 +67,15 @@ int ImageSaverRunner::processImage(ImageSource *imageSource, Image *image)
                 case V4L2_PIX_FMT_SRGGB8:
                         src = cv::Mat(image->height(), image->width(), CV_8UC1, (char *)image->planes()[0]);
                         cv::demosaicing(src, img, cv::COLOR_BayerRG2BGR);
-
-                        
                         break;
+                case V4L2_PIX_FMT_SRGGB10:
+                        src = cv::Mat(image->height(), image->width(), CV_16UC1, (char *)image->planes()[0]);
+                        cv::demosaicing(src, img, cv::COLOR_BayerRG2BGR);  
+                        break;      
+                case V4L2_PIX_FMT_SBGGR10:
+                        src = cv::Mat(image->height(), image->width(), CV_16UC1, (char *)image->planes()[0]);
+                        cv::demosaicing(src, img, cv::COLOR_BayerBG2BGR);  
+                        break;       
                 case V4L2_PIX_FMT_SRGGB12:
                 case V4L2_PIX_FMT_SGBRG12:
                         src = cv::Mat(image->height() , image->width(), CV_16UC1, (char *)image->planes()[0]);

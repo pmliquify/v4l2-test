@@ -285,109 +285,70 @@ ImageData ImageConvertCPU::convert10BitPackedBayerToRGB888(const Image *image, i
     const unsigned int bytesPerPixelFB = 3;
     const u_int16_t width = image->width();
     const u_int16_t height = image->height();
-    unsigned char pixelStep = 4;
-
+    const unsigned int pixelStep = 4; // 4 pixels per 5 bytes
+    const unsigned int bytesPerPixelImage = 5;
     const u_int16_t bytesPerLine = image->bytesPerLine();
     size_t dataSize = image->height() * image->width() * bytesPerPixelFB;
     unsigned char *data = new unsigned char[dataSize];
-
     const unsigned char *ptrImage = image->planes()[0];
 
-#if _OPENMP
-    unsigned int threadCount = omp_get_num_procs();
-    omp_set_num_threads(threadCount);
-    unsigned int threadHeight = height / threadCount;
-
-#pragma omp parallel
-    {
-        int threadId = omp_get_thread_num();
-        for (unsigned int y = threadId * threadHeight; y < ((threadId + 1 < threadCount) ? ((threadId + 1) * threadHeight) : height); y += 1)
-        {
-
-#else
-    for (unsigned int y = 0; y < image->height(); y += 1)
-    {
-#endif
-
-            unsigned int yOffsetPtrFB = y * width * bytesPerPixelFB;
-            unsigned int YOffsetPtrImage = y * bytesPerLine;
-
-            unsigned int bytesPerPixelImage = 5;
-
-            for (unsigned int x = 0; x < width / pixelStep; x += 1)
-            {
-                unsigned int xOffsetPtrImage = x * bytesPerPixelImage;
-                const unsigned char *pixelImage = ptrImage + YOffsetPtrImage + xOffsetPtrImage;
-                unsigned int xOffsetPtrFB = x * bytesPerPixelFB * pixelStep;
-                unsigned char *pixelFB = data + yOffsetPtrFB + xOffsetPtrFB;
-
-                unsigned char r, g, b;
-                if (image->pixelformat() == V4L2_PIX_FMT_SRGGB10P)
-                {
-                    // Bayer to RGB conversion for SRGGB8
-                    if ((y % 2 == 0) && (x % 2 == 0))
-                    {
-                        r = pixelImage[0];
-                        g = (pixelImage[1] + pixelImage[bytesPerLine]) / 2;
-                        b = pixelImage[bytesPerLine + 1];
-                    }
-                    else if ((y % 2 == 0) && (x % 2 == 1))
-                    {
-                        r = (pixelImage[0] + pixelImage[2]) / 2;
-                        g = pixelImage[1];
-                        b = (pixelImage[bytesPerLine] + pixelImage[bytesPerLine + 2]) / 2;
-                    }
-                    else if ((y % 2 == 1) && (x % 2 == 0))
-                    {
-                        r = (pixelImage[0] + pixelImage[2 * bytesPerLine]) / 2;
-                        g = pixelImage[bytesPerLine];
-                        b = (pixelImage[bytesPerLine + 1] + pixelImage[2 * bytesPerLine + 1]) / 2;
-                    }
-                    else
-                    {
-                        r = pixelImage[0];
-                        g = (pixelImage[1] + pixelImage[bytesPerLine]) / 2;
-                        b = pixelImage[bytesPerLine + 1];
-                    }
-                }
-                else if (image->pixelformat() == V4L2_PIX_FMT_SGBRG10P)
-                {
-                    // Bayer to RGB conversion for SGBRG8
-                    if ((y % 2 == 0) && (x % 2 == 0))
-                    {
-                        g = pixelImage[0];
-                        r = (pixelImage[1] + pixelImage[bytesPerLine]) / 2;
-                        b = pixelImage[bytesPerLine + 1];
-                    }
-                    else if ((y % 2 == 0) && (x % 2 == 1))
-                    {
-                        g = (pixelImage[0] + pixelImage[2]) / 2;
-                        r = pixelImage[1];
-                        b = (pixelImage[bytesPerLine] + pixelImage[bytesPerLine + 2]) / 2;
-                    }
-                    else if ((y % 2 == 1) && (x % 2 == 0))
-                    {
-                        g = (pixelImage[0] + pixelImage[2 * bytesPerLine]) / 2;
-                        r = pixelImage[bytesPerLine];
-                        b = (pixelImage[bytesPerLine + 1] + pixelImage[2 * bytesPerLine + 1]) / 2;
-                    }
-                    else
-                    {
-                        g = pixelImage[0];
-                        r = (pixelImage[1] + pixelImage[bytesPerLine]) / 2;
-                        b = pixelImage[bytesPerLine + 1];
-                    }
-                    *((unsigned long *)pixelFB) = r << 16 | g << 8 | b;
-                    *((unsigned long *)(pixelFB + bytesPerPixelFB)) = r << 16 | g << 8 | b;
-                    *((unsigned long *)(pixelFB + 2 * bytesPerPixelFB)) = r << 16 | g << 8 | b;
-                    *((unsigned long *)(pixelFB + 3 * bytesPerPixelFB)) = r << 16 | g << 8 | b;
-                }
+    // Step 1: Unpack the Bayer image into a 2D array of 10-bit values
+    std::vector<std::vector<uint16_t>> bayer(height, std::vector<uint16_t>(width, 0));
+    for (unsigned int y = 0; y < height; ++y) {
+        unsigned int YOffsetPtrImage = y * bytesPerLine;
+        for (unsigned int x = 0; x < width; x += pixelStep) {
+            unsigned int xOffsetPtrImage = (x / pixelStep) * bytesPerPixelImage;
+            const unsigned char *pixelImage = ptrImage + YOffsetPtrImage + xOffsetPtrImage;
+            uint16_t unpacked[4];
+            unpacked[0] = ((pixelImage[0] << 2) | ((pixelImage[4] >> 0) & 0x3));
+            unpacked[1] = ((pixelImage[1] << 2) | ((pixelImage[4] >> 2) & 0x3));
+            unpacked[2] = ((pixelImage[2] << 2) | ((pixelImage[4] >> 4) & 0x3));
+            unpacked[3] = ((pixelImage[3] << 2) | ((pixelImage[4] >> 6) & 0x3));
+            for (unsigned int i = 0; i < pixelStep && (x + i) < width; ++i) {
+                bayer[y][x + i] = unpacked[i];
             }
         }
-
-#if _OPENMP
     }
-#endif
+
+    // Step 2: Bilinear debayering (SRGGB pattern)
+    for (unsigned int y = 0; y < height; ++y) {
+        for (unsigned int x = 0; x < width; ++x) {
+            unsigned int xOffsetPtrFB = y * width * bytesPerPixelFB + x * bytesPerPixelFB;
+            unsigned char *pixelFB = data + xOffsetPtrFB;
+            uint16_t R = 0, G = 0, B = 0;
+            // Handle borders by clamping
+            auto get = [&](int yy, int xx) -> uint16_t {
+                int y_ = std::max(0, std::min((int)height - 1, yy));
+                int x_ = std::max(0, std::min((int)width - 1, xx));
+                return bayer[y_][x_];
+            };
+            if ((y % 2 == 0) && (x % 2 == 0)) {
+                // R location
+                R = get(y, x);
+                G = (get(y, x - 1) + get(y, x + 1) + get(y - 1, x) + get(y + 1, x)) / 4;
+                B = (get(y - 1, x - 1) + get(y - 1, x + 1) + get(y + 1, x - 1) + get(y + 1, x + 1)) / 4;
+            } else if ((y % 2 == 0) && (x % 2 == 1)) {
+                // G on R row
+                R = (get(y, x - 1) + get(y, x + 1)) / 2;
+                G = get(y, x);
+                B = (get(y - 1, x) + get(y + 1, x)) / 2;
+            } else if ((y % 2 == 1) && (x % 2 == 0)) {
+                // G on B row
+                R = (get(y - 1, x) + get(y + 1, x)) / 2;
+                G = get(y, x);
+                B = (get(y, x - 1) + get(y, x + 1)) / 2;
+            } else {
+                // B location
+                R = (get(y - 1, x - 1) + get(y - 1, x + 1) + get(y + 1, x - 1) + get(y + 1, x + 1)) / 4;
+                G = (get(y, x - 1) + get(y, x + 1) + get(y - 1, x) + get(y + 1, x)) / 4;
+                B = get(y, x);
+            }
+            // Scale 10-bit to 8-bit
+            pixelFB[2] = (unsigned char)(R >> 2);
+            pixelFB[1] = (unsigned char)(G >> 2);
+            pixelFB[0] = (unsigned char)(B >> 2);
+        }
+    }
     ImageData result;
     result.data = data;
     result.size = dataSize;
