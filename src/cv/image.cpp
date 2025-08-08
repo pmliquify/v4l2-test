@@ -59,6 +59,16 @@ void Image::init(u_int16_t width, u_int16_t height, u_int16_t bytesPerLine, u_in
                 case V4L2_PIX_FMT_SBGGR12P:
                         m_bytesPerPixel = 1.5; // 12 bits per pixel
                         break; 
+                case V4L2_PIX_FMT_Y16:
+                case V4L2_PIX_FMT_SRGGB16:
+                case V4L2_PIX_FMT_SGBRG16:
+                case V4L2_PIX_FMT_SGRBG16:
+                case V4L2_PIX_FMT_SBGGR16:
+                        m_bytesPerPixel = 2.0; // 16 bits per pixel
+                        break;
+                default:
+                        m_bytesPerPixel = 0.0; // Unsupported pixel format
+                        break;
                 
 
         }
@@ -123,6 +133,17 @@ u_int16_t Image::pixelValue(u_int16_t x, u_int16_t y) const
         }
 
         
+        
+        case V4L2_PIX_FMT_Y16:
+        case V4L2_PIX_FMT_SRGGB16:
+        case V4L2_PIX_FMT_SGBRG16:
+        case V4L2_PIX_FMT_SGRBG16:
+        case V4L2_PIX_FMT_SBGGR16:
+                val16 = (*(u_int16_t*)pixel);
+                break;
+        default:
+                val16 = 0; // Unsupported pixel format
+                break;
         }
         val16 = val16 >> m_shift;
         return val16;
