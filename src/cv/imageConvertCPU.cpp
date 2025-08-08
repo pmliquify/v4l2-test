@@ -356,26 +356,110 @@ ImageData ImageConvertCPU::convert10BitPackedBayerToRGB888(const Image *image, i
 }
 ImageData ImageConvertCPU::convert12BitPackedBayerToRGB888(const Image *image, int scaleFactor) const
 {
-
-
-    // Entpackte Bilddaten als 16-Bit Matrix
-    size_t dataSize = image->height() * image->width() * 2;
-    uint16_t* data = new uint16_t[dataSize];
-
+    int scaledWidth = image->width() / scaleFactor;
+    int scaledHeight = image->height() / scaleFactor;
+    
+    // RGB888 output: 3 bytes per pixel
+    size_t outputSize = scaledWidth * scaledHeight * 3;
+    unsigned char* rgbData = new unsigned char[outputSize];
+    
+    // Temporary buffer for unpacked 12-bit values
+    uint16_t* tempData = new uint16_t[image->width() * image->height()];
+    
     const unsigned char *ptrImage = image->planes()[0];
+    
+    // Unpack 12-bit packed data
+    for (int y = 0; y < image->height(); y++) {
+        for (int x = 0; x < image->width(); x += 2) {
+            // Each pair of pixels is stored in 3 bytes
+            int pixelPairIndex = (y * image->width() + x) / 2;
+            int byteIndex = pixelPairIndex * 3;
+            
+            if (byteIndex + 2 < image->imageSize()) {
+                // Extract two 12-bit pixels from 3 bytes
+                // According to kernel documentation:
+                // byte0 = pixel0_high[7:0], byte1 = pixel1_high[7:0]
+                // byte2 = pixel1_low[7:4] | pixel0_low[3:0] 
+                uint16_t pixel1 = (ptrImage[byteIndex]<< 4) | ((ptrImage[byteIndex + 2] & 0x0F));
+                uint16_t pixel2 = (ptrImage[byteIndex + 1]<< 4) | (((ptrImage[byteIndex + 2] & 0xF0) >> 4));
 
-    size_t idx = 0;
-    for (size_t i = 0; i < image->imageSize(); i += 3) {
-        uint16_t pixel1 = (ptrImage[i] << 4) | (ptrImage[i + 2] & 0x0F);  // Erstes 12-Bit-Pixel
-        uint16_t pixel2 = (ptrImage[i + 1] << 4) | (ptrImage[i + 2] >> 4); // Zweites 12-Bit-Pixel
+                // std::cout << "Unpacking pixel pair at (" << x << ", " << y << "): "
+                //           << "Pixel1: " << pixel1 << ", Pixel2: " << pixel2 << std::endl;
 
-        data[idx++] = pixel1 << 4;  // In 16-Bit konvertieren (Skalierung auf 16 Bit)
-        data[idx++] = pixel2 << 4;
+                // //Print raw pixel values for debugging
+                // std::cout << "Value: " << (int)  ptrImage[byteIndex] << " " 
+                //           << (int) ptrImage[byteIndex + 1] << " " 
+                //           <<(int)  ptrImage[byteIndex + 2] << std::endl;
+                
+                tempData[y * image->width() + x] = pixel1;
+                if (x + 1 < image->width()) {
+                    tempData[y * image->width() + x + 1] = pixel2;
+                }
+            }
+        }
     }
-
-
+    
+    // Convert Bayer pattern to RGB with scaling
+    for (int y = 0; y < scaledHeight; y++) {
+        for (int x = 0; x < scaledWidth; x++) {
+            int srcX = x * scaleFactor;
+            int srcY = y * scaleFactor;
+            
+            // Simple Bayer to RGB conversion (nearest neighbor debayering)
+            uint16_t r = 0, g = 0, b = 0;
+            
+            // Determine Bayer pattern position (assuming RGGB pattern for SRGGB12P)
+            bool isRedRow = (srcY % 2 == 0);
+            bool isRedCol = (srcX % 2 == 0);
+            
+            if (isRedRow && isRedCol) {
+                // Red pixel
+                r = tempData[srcY * image->width() + srcX];
+                // Interpolate green from neighbors
+                if (srcX + 1 < image->width()) g += tempData[srcY * image->width() + srcX + 1];
+                if (srcY + 1 < image->height()) g += tempData[(srcY + 1) * image->width() + srcX];
+                g /= 2;
+                // Interpolate blue from diagonal
+                if (srcX + 1 < image->width() && srcY + 1 < image->height()) {
+                    b = tempData[(srcY + 1) * image->width() + srcX + 1];
+                }
+            } else if (isRedRow && !isRedCol) {
+                // Green pixel (red row)
+                g = tempData[srcY * image->width() + srcX];
+                // Get red from left, blue from below
+                if (srcX > 0) r = tempData[srcY * image->width() + srcX - 1];
+                if (srcY + 1 < image->height()) b = tempData[(srcY + 1) * image->width() + srcX];
+            } else if (!isRedRow && isRedCol) {
+                // Green pixel (blue row)
+                g = tempData[srcY * image->width() + srcX];
+                // Get red from above, blue from right
+                if (srcY > 0) r = tempData[(srcY - 1) * image->width() + srcX];
+                if (srcX + 1 < image->width()) b = tempData[srcY * image->width() + srcX + 1];
+            } else {
+                // Blue pixel
+                b = tempData[srcY * image->width() + srcX];
+                // Interpolate green from neighbors
+                if (srcX > 0) g += tempData[srcY * image->width() + srcX - 1];
+                if (srcY > 0) g += tempData[(srcY - 1) * image->width() + srcX];
+                g /= 2;
+                // Interpolate red from diagonal
+                if (srcX > 0 && srcY > 0) {
+                    r = tempData[(srcY - 1) * image->width() + srcX - 1];
+                }
+            }
+            
+            // Convert from 12-bit to 8-bit and store as RGB888
+            int outputIndex = (y * scaledWidth + x) * 3;
+            rgbData[outputIndex] = (r >> 4) & 0xFF;     // R
+            rgbData[outputIndex + 1] = (g >> 4) & 0xFF; // G  
+            rgbData[outputIndex + 2] = (b >> 4) & 0xFF; // B
+        }
+    }
+    
+    delete[] tempData;
+    
     ImageData result;
-    result.data = reinterpret_cast<unsigned char*>(data);
-    result.size = dataSize;
+    result.data = rgbData;
+    result.size = outputSize;
     return result;
 }

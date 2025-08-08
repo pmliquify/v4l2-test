@@ -53,6 +53,13 @@ void Image::init(u_int16_t width, u_int16_t height, u_int16_t bytesPerLine, u_in
                 case V4L2_PIX_FMT_SBGGR10P:
                         m_bytesPerPixel = 1.25; // 10 bits per pixel
                         break; 
+                case V4L2_PIX_FMT_SRGGB12P:
+                case V4L2_PIX_FMT_SGBRG12P:
+                case V4L2_PIX_FMT_SGRBG12P:
+                case V4L2_PIX_FMT_SBGGR12P:
+                        m_bytesPerPixel = 1.5; // 12 bits per pixel
+                        break; 
+                
 
         }
 }
@@ -96,6 +103,25 @@ u_int16_t Image::pixelValue(u_int16_t x, u_int16_t y) const
                 break;
                 
         }
+        case V4L2_PIX_FMT_SRGGB12P:
+        case V4L2_PIX_FMT_SGBRG12P:
+        case V4L2_PIX_FMT_SGRBG12P:
+        case V4L2_PIX_FMT_SBGGR12P:
+        {
+              
+                unsigned int pixel_pair_index = (x / 2) * 3;
+                unsigned int base_index = y * m_bytesPerLine + pixel_pair_index;
+                
+                if (x % 2 == 0) {
+                        // Even pixel (0, 2, 4, ...)
+                        val16 = (data[base_index ]<< 4) | ((data[base_index + 2] & 0x0F));
+                } else {
+                        // Odd pixel (1, 3, 5, ...)
+                        val16 = (data[base_index + 1]<< 4) | ((data[base_index + 2] & 0xF0) >> 4);
+                }
+                break;
+        }
+
         
         }
         val16 = val16 >> m_shift;

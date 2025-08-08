@@ -166,4 +166,45 @@ TEST(convert10BitPackedBayerToRGB888, ConvertSRGGB10P) {
     if (data.size) free(data.data);
 }
 
+TEST(convert12BitPackedBayerToRGB888, Convert) {
+    ImageConvertCPU converter;
+    Image image;
+    const int width = 10;
+    const int height = 10;
+    const int scaleFactor = 1;
+    
+    // 12-bit packed: 2 pixels in 3 bytes
+    // For a 4x4 image, we need (4*4)/2 * 3 = 24 bytes
+    const int imageSize = (width * height / 2) * 3;
+    image.init(width, height, (width * 3) / 2, imageSize, imageSize, V4L2_PIX_FMT_SRGGB12P, 0, 0);
 
+    image.planes().resize(1);
+    image.planes()[0] = new unsigned char[imageSize];
+    
+    // Create test pattern according to kernel documentation format:
+    // byte0 = pixel0_high[7:0], byte1 = pixel1_high[7:0] 
+    // byte2 = pixel1_low[7:4] | pixel0_low[3:0]
+    // For SRGGB pattern: R at (0,0), G at (0,1), G at (1,0), B at (1,1)
+    // Set first pixel to max red (0xFFF = 4095 in 12-bit)
+    // This means: pixel0_high = 0xFF, pixel0_low = 0x0F
+    for (int byteIdx = 0; byteIdx < imageSize; byteIdx += 3) {
+        // First pixel: 0xFFF (max 12-bit value for red)
+        image.planes()[0][byteIdx] = 0xFF;     // pixel0_high[7:0]
+        image.planes()[0][byteIdx + 1] = 0x00; // pixel1_high[7:0] (green = 0)
+        image.planes()[0][byteIdx + 2] = 0x01; // pixel1_low[7:4] = 0, pixel0_low[3:0] = F
+    }
+   
+    ImageData data = converter.convert12BitPackedBayerToRGB888(&image, scaleFactor);
+    EXPECT_NE(data.data, nullptr);
+    EXPECT_GT(data.size, 0);
+    
+    // The function should return RGB888 data (3 bytes per pixel)
+    EXPECT_EQ(data.size, width * height * 3);
+
+    EXPECT_EQ(data.data[0], 0xFF); // R (4095 >> 4 = 255)
+    EXPECT_EQ(data.data[1], 0x7F); // G (2047 >> 4 = 127, interpolated from neighbor)
+    EXPECT_EQ(data.data[2], 0x0); // B
+    
+    if (data.size) free(data.data);
+    delete[] image.planes()[0];
+}
