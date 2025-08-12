@@ -90,9 +90,22 @@ int ImageSaverRunner::processImage(ImageSource *imageSource, Image *image)
                         src = cv::Mat(image->height() * 3/2, image->width(), CV_8UC1, (char *)image->planes()[0]);
 
                         cv::cvtColor(src, img, cv::COLOR_YUV2BGR_NV12);
-                       
-
-                       
+                        break;
+                //16 bit formats
+                case V4L2_PIX_FMT_Y16:
+                        src = cv::Mat(image->height(), image->width(), CV_16UC1, (char *)image->planes()[0]);
+                        break;
+                case V4L2_PIX_FMT_SRGGB16:
+                        src = cv::Mat(image->height(), image->width(), CV_16UC1, (char *)image->planes()[0]);
+                        cv::demosaicing(src, img, cv::COLOR_BayerRG2BGR);
+                        break;
+                case V4L2_PIX_FMT_SGBRG16:
+                        src = cv::Mat(image->height(), image->width(), CV_16UC1, (char *)image->planes()[0]);
+                        cv::demosaicing(src, img, cv::COLOR_BayerGB2BGR);       
+                        break;
+                case V4L2_PIX_FMT_SGRBG16:
+                        src = cv::Mat(image->height(), image->width(), CV_16UC1, (char *)image->planes()[0]);
+                        cv::demosaicing(src, img, cv::COLOR_BayerGR2BGR);               
                         break;
                 default:
                         std::cerr << "Format not supported!" << std::endl;

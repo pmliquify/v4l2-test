@@ -41,7 +41,7 @@ int ImageSaverSink::pushFrame(cv::Mat &frame, uint64_t timestamp)
     //Timestamp in milliseconds to string    
     std::string strTimestamp = std::to_string(timestamp/1000) + "." +  std::to_string(timestamp%1000);
 
-    cv::imwrite(prefix + "_" + strTimestamp + ".jpg", frame);
+    cv::imwrite(prefix + "_" + strTimestamp + ".png", frame);
 
     return 0;
 
