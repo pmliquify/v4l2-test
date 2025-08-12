@@ -68,9 +68,8 @@ int GstreamerRunner::processImage(ImageSource *imageSource, Image *image)
                         break;
                 case V4L2_PIX_FMT_SRGGB12P:
                 case V4L2_PIX_FMT_SGBRG12P:
-                        data = m_imageConvertCPU.convert12BitPackedBayerToRGB888(image, 1);
-                        img = cv::Mat(image->height()/1, image->width()/1, CV_16UC1, data.data);
-                        img.convertTo(img, CV_8U, 1.0 / 256.0);
+                        data = m_imageConvertCPU.convert12BitPackedBayerToRGB888(image, m_scaleFactor);
+                        img = cv::Mat(image->height()/m_scaleFactor, image->width()/m_scaleFactor, CV_8UC3, data.data);
                         break;
                 case V4L2_PIX_FMT_NV12 :
                         img = cv::Mat(image->height() * 3/2, image->width(), CV_8UC1, (char *)image->planes()[0]);
@@ -99,6 +98,8 @@ int GstreamerRunner::processImage(ImageSource *imageSource, Image *image)
         //std::cout << "Time taken to push the image: " << duration.count() << " ms" << std::endl;
 
         img.release();
+        if(data.size)
+                free(data.data);
         if(data.size)
                 free(data.data);
 

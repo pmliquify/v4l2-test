@@ -211,10 +211,10 @@ int GstreamerSink::initUdpRK(GstElement *link)
 int GstreamerSink::initMp4(GstElement *link)
 {
    
-    GstElement *x264enc = gst_element_factory_make("x264enc", "vc_x264enc");
-    g_object_set(G_OBJECT(x264enc), "bitrate", 10000 , NULL);
-    g_object_set(G_OBJECT(x264enc), "speed-preset", 3, NULL);
-        g_object_set(G_OBJECT(x264enc), "tune", 4, NULL);
+    GstElement *mpph264enc = gst_element_factory_make("mpph264enc", "vc_mpph264enc");
+    g_object_set(G_OBJECT(mpph264enc), "bitrate", 10000 , NULL);
+    g_object_set(G_OBJECT(mpph264enc), "speed-preset", 3, NULL);
+        g_object_set(G_OBJECT(mpph264enc), "tune", 4, NULL);
  //     "! mp4mux ! "
     //     "filesink location=test.mp4";
     GstElement *mp4mux = gst_element_factory_make("mp4mux", "vc_rtph264pay");
@@ -222,10 +222,10 @@ int GstreamerSink::initMp4(GstElement *link)
     GstElement *filesink = gst_element_factory_make("filesink", "vc_sink");
     g_object_set(G_OBJECT(filesink), "location", m_filename.c_str(), NULL);
 
-    gst_bin_add_many(GST_BIN(m_pipeline), x264enc, mp4mux ,filesink, NULL);
+    gst_bin_add_many(GST_BIN(m_pipeline), mpph264enc, mp4mux ,filesink, NULL);
 
-    gst_element_link(link, x264enc);
-    gst_element_link(x264enc, mp4mux);
+    gst_element_link(link, mpph264enc);
+    gst_element_link(mpph264enc, mp4mux);
     gst_element_link(mp4mux, filesink);
 
 

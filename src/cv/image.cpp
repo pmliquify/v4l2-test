@@ -52,7 +52,7 @@ void Image::init(u_int16_t width, u_int16_t height, u_int16_t bytesPerLine, u_in
         case V4L2_PIX_FMT_SGRBG10P:
         case V4L2_PIX_FMT_SBGGR10P:
                 m_bytesPerPixel = 1.25; // 10 bits per pixel
-                break;
+                break; 
         case V4L2_PIX_FMT_Y12P:
         case V4L2_PIX_FMT_SRGGB12P:
         case V4L2_PIX_FMT_SGBRG12P:
@@ -60,12 +60,25 @@ void Image::init(u_int16_t width, u_int16_t height, u_int16_t bytesPerLine, u_in
         case V4L2_PIX_FMT_SBGGR12P:
                 m_bytesPerPixel = 1.5; // 12 bits per pixel
                 break;
+        case V4L2_PIX_FMT_Y14P:
         case V4L2_PIX_FMT_SRGGB14P:
         case V4L2_PIX_FMT_SGBRG14P:
         case V4L2_PIX_FMT_SGRBG14P:
         case V4L2_PIX_FMT_SBGGR14P:
                 m_bytesPerPixel = 1.75; // 14 bits per pixel
+                break;        
+        case V4L2_PIX_FMT_Y16:
+        case V4L2_PIX_FMT_SRGGB16:
+        case V4L2_PIX_FMT_SGBRG16:
+        case V4L2_PIX_FMT_SGRBG16:
+        case V4L2_PIX_FMT_SBGGR16:
+                m_bytesPerPixel = 2.0; // 16 bits per pixel
                 break;
+        default:
+                m_bytesPerPixel = 0.0; // Unsupported pixel format
+                break;
+                
+
         }
 }
 
@@ -108,18 +121,26 @@ u_int16_t Image::pixelValue(u_int16_t x, u_int16_t y) const
                 val16 = (data[first_value_index] << 2) | ((data[second_value_index] & mask) >> ((x % 4) * 2));
                 break;
         }
-        case V4L2_PIX_FMT_Y12P:
+        case V4L2_PIX_FMT_Y12P: 
         case V4L2_PIX_FMT_SRGGB12P:
         case V4L2_PIX_FMT_SGBRG12P:
         case V4L2_PIX_FMT_SGRBG12P:
         case V4L2_PIX_FMT_SBGGR12P:
         {
-                unsigned int first_value_index = y * m_bytesPerLine + (x / 2) * 2 * m_bytesPerPixel + (x % 4);
-                unsigned int second_value_index = y * m_bytesPerLine + (x / 2) * 2 * m_bytesPerPixel + 2;
-                unsigned int mask = 0b1111 << ((x % 2) * 4);
-                val16 = (data[first_value_index] << 4) | ((((unsigned int)data[second_value_index]) & mask) >> ((x % 2) * 4));
+              
+                unsigned int pixel_pair_index = (x / 2) * 3;
+                unsigned int base_index = y * m_bytesPerLine + pixel_pair_index;
+                
+                if (x % 2 == 0) {
+                        // Even pixel (0, 2, 4, ...)
+                        val16 = (data[base_index ]<< 4) | ((data[base_index + 2] & 0x0F));
+                } else {
+                        // Odd pixel (1, 3, 5, ...)
+                        val16 = (data[base_index + 1]<< 4) | ((data[base_index + 2] & 0xF0) >> 4);
+                }
                 break;
         }
+        case V4L2_PIX_FMT_Y14P:
         case V4L2_PIX_FMT_SRGGB14P:
         case V4L2_PIX_FMT_SGBRG14P:
         case V4L2_PIX_FMT_SGRBG14P:
@@ -132,10 +153,18 @@ u_int16_t Image::pixelValue(u_int16_t x, u_int16_t y) const
                 val16 = (data[first_value_index] << 6) | ((((unsigned int)data[second_value_index]) & mask) >> ((x % 4) * 6));
                 break;
         }
+        case V4L2_PIX_FMT_Y16:
+        case V4L2_PIX_FMT_SRGGB16:
+        case V4L2_PIX_FMT_SGBRG16:
+        case V4L2_PIX_FMT_SGRBG16:
+        case V4L2_PIX_FMT_SBGGR16:
+                val16 = (*(u_int16_t*)pixel);
+                break;
         default:
-                std::cerr << "Image::pixelValue: Unsupported pixel format" <<   pixelformatString() << std::endl;
-                return 0;
-        }
+                val16 = 0; // Unsupported pixel format
+                break;
+        }        
+       
         val16 = val16 >> m_shift;
         return val16;
 }
