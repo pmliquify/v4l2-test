@@ -21,9 +21,13 @@ public:
 
         virtual int setExposure(int exposure)  { return 0; }
         virtual int setGain(int gain) { return 0; }
+        virtual int setCSILanes(int lanes) { return 0; }
         virtual int setBlackLevel(int blackLevel) { return 0; }
-        virtual int setBinning(int binning) { return 0; }
         virtual int setTriggerMode(int triggerMode) { return 0; }
         virtual int setIOMode(int ioMode) { return 0; }
         virtual int setFrameRate(int frameRate) { return 0; }
+        virtual int setBinningMode(int binning) { return 0; }
+        virtual int setScalingMode(int scalingMode) { return 0; }
+        virtual int setScale(int scale) { return 0; }
+        virtual int setLiveRoi(int scale, int left, int top) { return 0; }
 };

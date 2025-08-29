@@ -30,19 +30,22 @@ public:
 
         int setExposure(int exposure);
         int setGain(int gain);
+        int setCSILanes(int lanes);
         int setBlackLevel(int blackLevel);
-        int setBinning(int binning);
         int setTriggerMode(int triggerMode);
         int setIOMode(int ioMode);
         int setFrameRate(int frameRate);
+        int setBinningMode(int binningMode);
+        int setScalingMode(int scalingMode);
+        int setScale(int scale);
+        int setLiveRoi(int scale, int left, int top);
 
 protected:
         int m_deviceFd;
         int m_subDeviceFd;
         
-        int setControl(unsigned int id, int value);
-        int setExtControl(unsigned int id, unsigned int type, int value);
-        int setControl(std::string name, int value);
+        int setExtControl(unsigned int id, unsigned int type, void *value, int size = 0);
+        int setControl(std::string name, void *value, int size = 0);
 
 private:
         struct v4l2_format m_format;

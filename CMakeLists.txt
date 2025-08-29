@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5.0)
 
 project(V4L2Test 
-        VERSION 0.3.0
+        VERSION 0.4.0
         DESCRIPTION "V4L2 testing application"
         HOMEPAGE_URL "https://github.com/pmliquify/v4l2-test"
         LANGUAGES CXX)
@@ -91,7 +91,8 @@ add_library(runner
         src/runners/streamrunner.cpp
         src/runners/isprunner.cpp
         src/runners/noisetestrunner.cpp
-        src/runners/socketclientrunner.cpp)
+        src/runners/socketclientrunner.cpp
+        src/runners/liveroitestrunner.cpp)
 target_include_directories(runner PUBLIC include)
 target_link_libraries(runner PRIVATE cv utils network gui sources)
 

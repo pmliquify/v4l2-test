@@ -32,15 +32,19 @@ void V4L2ImageSource::printArgs()
         printArgSection("V4L2 ImageSource");
         printArg("-d",      "Set device /dev/video0");
         printArg("-sd",     "Set subdevice /dev/v4l-subdev0");
-        printArg("-bi",     "Set binning (see binning modes of each camera module)");
+        printArg("-bi",     "Set binning mode (see binning modes of each camera module)");
         printArg("-bl",     "Set black level");
+        printArg("-cl",     "Set CSI lanes");
         printArg("-e",      "Set exposure time");
         printArg("-f",      "Set pixel format");
         printArg("-g",      "Set gain value");
+        printArg("-lr",     "Set live roi");
         printArg("-m",      "Set IO mode");
         printArg("-r",      "Set frame rate");
         printArg("-t",      "Set trigger mode");
         printArg("--shift", "Set bit shift for each pixel in RAW10, RAW12 format");
+        printArg("-sm",     "Set scaling mode");
+        printArg("--scale", "Set scale");
 }
 
 int V4L2ImageSource::setup(CommandArgs &args)
@@ -49,10 +53,13 @@ int V4L2ImageSource::setup(CommandArgs &args)
         printFormat();
         
         if (args.exists("-bi")) {
-                setBinning(args.optionInt("-bi"));
+                setBinningMode(args.optionInt("-bi"));
         }
         if (args.exists("-bl")) {
                 setBlackLevel(args.optionInt("-bl"));
+        }
+        if (args.exists("-cl")) {
+                setCSILanes(args.optionInt("-cl"));
         }
         if (args.exists("-e")) {
                 setExposure(args.optionInt("-e"));
@@ -68,11 +75,21 @@ int V4L2ImageSource::setup(CommandArgs &args)
         if (args.exists("-g")) {
                 setGain(args.optionInt("-g"));
         }
+        if (args.exists("-lr")) {
+                auto value = args.optionArray<int, 3>("-lr");
+                setLiveRoi(value[0], value[1], value[2]);
+        }
         if (args.exists("-m")) {
                 setIOMode(args.optionInt("-m"));
         }
         if (args.exists("-r")) {
                 setFrameRate(args.optionInt("-r"));
+        }
+        if (args.exists("-sm")) {
+                setScalingMode(args.optionInt("-sm"));
+        }
+        if (args.exists("--scale")) {
+                setScale(args.optionInt("--scale"));
         }
         if (args.exists("-t")) {
                 setTriggerMode(args.optionInt("-t"));
@@ -363,59 +380,80 @@ int V4L2ImageSource::getImage(Image *&image, int timeout, bool lastImage)
 
 int V4L2ImageSource::setExposure(int exposure)
 {
-        return setControl("Exposure", exposure);
+        return setControl("Exposure", &exposure);
 }
 
 int V4L2ImageSource::setGain(int gain)
 {
-        return setControl("Gain", gain);
+        return setControl("Gain", &gain);
+}
+
+int V4L2ImageSource::setCSILanes(int lanes)
+{
+        return setControl("CSI Lanes", &lanes);
 }
 
 int V4L2ImageSource::setBlackLevel(int blackLevel)
 {
-        return setControl("Black Level", blackLevel);
-}
-
-int V4L2ImageSource::setBinning(int binning)
-{
-        return setControl("Binning", binning);
+        return setControl("Black Level", &blackLevel);
 }
 
 int V4L2ImageSource::setTriggerMode(int triggerMode)
 {
-        return setControl("Trigger Mode", triggerMode);
+        return setControl("Trigger Mode", &triggerMode);
 }
 
 int V4L2ImageSource::setIOMode(int ioMode)
 {
-        return setControl("IO Mode", ioMode);
+        return setControl("IO Mode", &ioMode);
 }
 
 int V4L2ImageSource::setFrameRate(int frameRate)
 {
-        return setControl("Frame Rate", frameRate);
+        return setControl("Frame Rate", &frameRate);
 }
 
-int V4L2ImageSource::setControl(unsigned int id, int value)
+int V4L2ImageSource::setBinningMode(int binningMode)
 {
-        struct v4l2_control control;
-        control.id = id;
-        control.value = value;
-        if (-1 == ioctl(m_deviceFd, VIDIOC_S_CTRL, &control)) {
-                handleErrorForIoctl(VIDIOC_S_CTRL, errno);
-                return -1;
-        }
-        return 0;
+        return setControl("Binning Mode", &binningMode);
 }
 
-int V4L2ImageSource::setExtControl(unsigned int id, unsigned int type, int value)
+int V4L2ImageSource::setScalingMode(int scaling)
+{
+        return setControl("Scaling Mode", &scaling);
+}
+
+int V4L2ImageSource::setScale(int scale)
+{
+        return setControl("Scale", &scale);
+}
+
+#define V4L2_CID_LIVE_ROI 0x00980934
+int V4L2ImageSource::setLiveRoi(int scale, int left, int top)
+{
+        __u32 value[3] = { static_cast<__u32>(scale),
+                        static_cast<__u32>(left),
+                        static_cast<__u32>(top) };
+
+        return setExtControl(V4L2_CID_LIVE_ROI, V4L2_CTRL_TYPE_U32, value, sizeof(value));
+}
+
+int V4L2ImageSource::setExtControl(unsigned int id, unsigned int type, void *value, int size)
 {
 	struct v4l2_ext_control  ext_control;
         memset(&ext_control, 0, sizeof(ext_control));
         ext_control.id = id;
         switch (type) {
-        case V4L2_CTRL_TYPE_INTEGER:   ext_control.value = value;   break;
-        case V4L2_CTRL_TYPE_INTEGER64: ext_control.value64 = value; break;
+        case V4L2_CTRL_TYPE_INTEGER:
+                ext_control.value = *reinterpret_cast<__s32*>(value);
+                break;
+        case V4L2_CTRL_TYPE_INTEGER64:
+                ext_control.value64 = *reinterpret_cast<__s64*>(value);
+                break;
+        case V4L2_CTRL_TYPE_U32:
+                ext_control.p_u32 = reinterpret_cast<__u32*>(value);
+                ext_control.size = size;
+                break;
         }
 
         struct v4l2_ext_controls ext_controls;
@@ -429,15 +467,17 @@ int V4L2ImageSource::setExtControl(unsigned int id, unsigned int type, int value
         return 0;
 }
 
-int V4L2ImageSource::setControl(std::string name, int value)
+int V4L2ImageSource::setControl(std::string name, void *value, int size)
 {
-        struct v4l2_queryctrl  queryctrl;
+        struct v4l2_query_ext_ctrl queryctrl;
         queryctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
-        while(0 == ioctl(m_subDeviceFd, VIDIOC_QUERYCTRL, &queryctrl)) {
+        while(0 == ioctl(m_subDeviceFd, VIDIOC_QUERY_EXT_CTRL, &queryctrl)) {
+                printf("Control (name: '%s', id: 0x%08x, type: %u, flags: 0x%08x)\n", 
+                        (const char *)queryctrl.name, queryctrl.id, queryctrl.type, queryctrl.flags);
                 if (0 == name.compare((const char *)queryctrl.name)) {
                         // printf("Control (name: '%s', id: 0x%08x, type: %u, flags: 0x%08x, value: %u)\n", 
                         //         name.c_str(), queryctrl.id, queryctrl.type, queryctrl.flags, value);
-                        return setExtControl(queryctrl.id, queryctrl.type, value);
+                        return setExtControl(queryctrl.id, queryctrl.type, value, size);
                 }
                 queryctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
         }

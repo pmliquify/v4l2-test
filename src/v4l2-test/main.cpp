@@ -6,6 +6,7 @@
 #include <runners/isprunner.hpp>
 #include <runners/noisetestrunner.hpp>
 #include <runners/socketclientrunner.hpp>
+#include <runners/liveroitestrunner.hpp>
 
 
 bool printHelp(CommandArgs &args, ImageSourceRunnerMap &runnerMap, ImageSource *imageSource)
@@ -49,6 +50,7 @@ void createRunners(ImageSourceRunnerMap &runnerMap)
         runnerMap["isp"] = new IspRunner();
         runnerMap["noise"] = new NoiseTestRunner();
         runnerMap["client"] = new SocketClientRunner();
+        runnerMap["liveroi"] = new LiveRoiTestRunner();
 }
 
 void runRunner(CommandArgs &args, ImageSourceRunnerMap &runnerMap, ImageSource *imageSource)
