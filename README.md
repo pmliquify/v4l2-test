@@ -11,7 +11,7 @@ git clone https://github.com/pmliquify/v4l2-test.git
 ./v4l2-test/make.sh
 ```
 # Requirements
-Gstreamer Support 
+#### Gstreamer Support 
 
 ```bash
 #For opencv support 
@@ -29,7 +29,19 @@ sudo apt-get install libgstreamer1.0-dev \
      python3-yaml
 # if you have Qt5 install this plugin
 sudo apt-get install gstreamer1.0-qt5
-You can find the executable in the build* directory.
+```
+
+#### On RaspberryPi OS Lite  install also:
+```bash
+sudo apt-get install \
+  gstreamer1.0-tools \
+  gstreamer1.0-plugins-base \
+  gstreamer1.0-plugins-good \
+  gstreamer1.0-plugins-bad \
+  gstreamer1.0-plugins-ugly \
+  gstreamer1.0-libav \
+  gstreamer1.0-gl
+```
 
 ### Arm64 build (cross compiling)
 
