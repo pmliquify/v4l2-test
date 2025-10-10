@@ -61,6 +61,20 @@ int GstreamerRunner::processImage(ImageSource *imageSource, Image *image)
                         data = m_imageConvertCPU.convert10BitPackedBayerToRGB888(image, m_scaleFactor);
                         img = cv::Mat(image->height()/m_scaleFactor, image->width()/m_scaleFactor, CV_8UC3, data.data);
                         break;
+                case V4L2_PIX_FMT_SRGGB10:
+                        img = cv::Mat(image->height(), image->width(), CV_16UC1, image->planes()[0]);
+                        img.convertTo(img, CV_8UC1, 1.0/2.0);
+                        cv::resize(img, img, cv::Size(image->width()/m_scaleFactor, image->height()/m_scaleFactor));
+                        cv::demosaicing(img, img, cv::COLOR_BayerRGGB2RGB);
+                  
+                        break;
+                case V4L2_PIX_FMT_SGBRG10:
+                        img = cv::Mat(image->height(), image->width(), CV_16UC1, image->planes()[0]);
+                        img.convertTo(img, CV_8UC1, 1.0/2.0);
+                        cv::resize(img, img, cv::Size(image->width()/m_scaleFactor, image->height()/m_scaleFactor));
+                        cv::demosaicing(img, img, cv::COLOR_BayerGBRG2RGB);
+                        
+                        break;
                 case V4L2_PIX_FMT_SGBRG8:
                 case V4L2_PIX_FMT_SRGGB8:
                         data = m_imageConvertCPU.convert8BitBayerToRGB888(image, m_scaleFactor);
