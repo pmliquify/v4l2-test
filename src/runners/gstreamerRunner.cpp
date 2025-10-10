@@ -71,6 +71,12 @@ int GstreamerRunner::processImage(ImageSource *imageSource, Image *image)
                         data = m_imageConvertCPU.convert12BitPackedBayerToRGB888(image, m_scaleFactor);
                         img = cv::Mat(image->height()/m_scaleFactor, image->width()/m_scaleFactor, CV_8UC3, data.data);
                         break;
+                case V4L2_PIX_FMT_Y16:
+                        img = cv::Mat(image->height(), image->width(), CV_16U, (char *)image->planes()[0]);
+                        cv::resize(img, img, cv::Size(image->width()/m_scaleFactor, image->height()/m_scaleFactor));
+                        img.convertTo(img, CV_8U, 1.0/256.0);
+                        cv::cvtColor(img, img, cv::COLOR_GRAY2BGR);
+                        break;
                 case V4L2_PIX_FMT_NV12 :
                         img = cv::Mat(image->height() * 3/2, image->width(), CV_8UC1, (char *)image->planes()[0]);
 
@@ -100,8 +106,7 @@ int GstreamerRunner::processImage(ImageSource *imageSource, Image *image)
         img.release();
         if(data.size)
                 free(data.data);
-        if(data.size)
-                free(data.data);
+
 
         return 0;
         // cv::Mat img(image->height(), image->width(), CV_16U, (char *)image->planes()[0]);

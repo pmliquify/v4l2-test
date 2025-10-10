@@ -74,6 +74,6 @@
         "typeindex": "cpp"
     },
     "cmake.debugConfig": {
-        "args": ["imagesaver", "--gst", "kms" , "-r", "10000", "-p", "16", "-e", "100000", "-sd", "/dev/v4l-subdev2", "--downscale", "3" , "--count", "20"]
+        "args": ["gstreamer", "--gst", "kms" , "-r", "10000", "-p", "16", "-e", "100000", "-sd", "/dev/v4l-subdev2", "--downscale", "3" , "--count", "20"]
     }
 }

@@ -192,7 +192,18 @@ int FrameBuffer::show(const Image *image)
                 // RAW12 shift Nano: 0, XavierNX: 4, TX2: 2
                 print16(image, image->shift() + 4);
                 break;
-        }
+        case V4L2_PIX_FMT_SRGGB10P:
+        case V4L2_PIX_FMT_SGBRG10P:
+        case V4L2_PIX_FMT_SGRBG10P:
+        case V4L2_PIX_FMT_SBGGR10P:
+                {ImageData data = m_imageConvertCPU.convert10BitPackedBayerToRGB888(image,1);        
+                break;}
+
+        default:
+                std::cout << "Not supported format" << std::endl;
+                break;
+         }
+        
         return 0;
 }
 

@@ -3,6 +3,7 @@
 #include <linux/fb.h>
 #include <cv/image.hpp>
 #include <cstdint> 
+#include <cv/imageConvertCPU.hpp>
 class FrameBuffer
 {
 public:
@@ -18,6 +19,7 @@ protected:
         int m_fd;
         int m_console_fd;
         void *m_ptr;
+        ImageConvertCPU m_imageConvertCPU;
 
 private:
         struct fb_var_screeninfo m_varScreenInfo;
