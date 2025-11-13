@@ -138,7 +138,7 @@ void FrameBuffer::print08(const Image *image)
         unsigned int height = (image->height() < m_varScreenInfo.yres) ? image->height() : m_varScreenInfo.yres-1;
         unsigned int bytesPerPixelFB = m_varScreenInfo.bits_per_pixel/8;
         unsigned char *ptrFB = (unsigned char *)m_ptr;
-        const unsigned char *ptrImage = image->plane(0);
+        const unsigned char *ptrImage = image->plane(0).data();
 
 #if _OPENMP
         unsigned int threadCount = omp_get_num_procs();
@@ -207,7 +207,7 @@ void FrameBuffer::print16(const Image *image, unsigned char shift)
         unsigned int height = (image->height() < m_varScreenInfo.yres) ? image->height() : m_varScreenInfo.yres;
         unsigned int bytesPerPixelFB = m_varScreenInfo.bits_per_pixel/8;
         unsigned char * ptrFB = (unsigned char *)m_ptr;
-        const unsigned char *ptrImage = image->planes()[0];
+        const unsigned char *ptrImage = image->plane(0).data();
 
 #if _OPENMP
         unsigned int threadCount = omp_get_num_procs();

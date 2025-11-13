@@ -22,6 +22,9 @@ if (OPENCV_FOUND)
         include_directories(${OpenCV_INCLUDE_DIRS})
 endif()
 
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(GST REQUIRED gstreamer-1.0 gstreamer-app-1.0 gstreamer-video-1.0)
+
 # --- Librarys ----------------------------------------------------------------
 
 # Library utils
@@ -35,6 +38,7 @@ target_include_directories(utils PUBLIC include)
 # Library cv
 add_library(cv
         STATIC
+        src/cv/plane.cpp
         src/cv/image.cpp
         src/cv/imageprint.cpp
         src/cv/imagestats.cpp)
@@ -57,8 +61,13 @@ add_library(sources
         src/sources/v4l2imagesource.cpp
         src/sources/socketserversource.cpp
         src/sources/autoexposure.cpp)
-target_include_directories(sources PUBLIC include)
-target_link_libraries(sources PRIVATE cv utils)
+if (GST_FOUND)
+        target_sources(sources PRIVATE 
+                src/sources/nvargusimagesource.cpp)
+        add_compile_definitions(WITH_GSTREAMER)
+        target_include_directories(sources PUBLIC include PRIVATE ${GST_INCLUDE_DIRS})
+        target_link_libraries(sources PRIVATE cv utils ${GST_LIBRARIES})
+endif()
 if (OPENCV_FOUND)
         target_link_libraries(sources PUBLIC ${OpenCV_LIBS})
 endif()

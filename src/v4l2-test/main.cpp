@@ -1,6 +1,9 @@
 #include <version.h>
 #include <utils/commandargs.hpp>
 #include <sources/v4l2imagesource.hpp>
+#ifdef WITH_GSTREAMER
+#include <sources/nvargusimagesource.hpp>
+#endif
 #include <sources/socketserversource.hpp>
 #include <runners/streamrunner.hpp>
 #include <runners/isprunner.hpp>
@@ -41,6 +44,11 @@ ImageSource *createImageSource(CommandArgs &args)
         if (args.exists("server")) {
                 return new SocketServerSource();
         }
+#ifdef WITH_GSTREAMER
+        if (args.exists("nvargus")) {
+                return new NvArgusImageSource();
+        }       
+#endif
         return new V4L2ImageSource();
 }
 

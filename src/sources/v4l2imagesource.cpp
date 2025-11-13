@@ -327,20 +327,24 @@ int V4L2ImageSource::getNextImage(Image *&image, int timeout, bool lastImage)
 
         switch (m_format.type) {
         case V4L2_BUF_TYPE_VIDEO_CAPTURE:
-                m_image->init(m_format.fmt.pix.width, m_format.fmt.pix.height, m_format.fmt.pix.bytesperline,
-                        m_format.fmt.pix.sizeimage, buffer->bytesused, m_format.fmt.pix.pixelformat, 
+                m_image->init(m_format.fmt.pix.width, m_format.fmt.pix.height, 
+                        m_format.fmt.pix.pixelformat,
+                        m_format.fmt.pix.sizeimage, m_format.fmt.pix.bytesperline,
                         buffer->sequence, timestamp);
                 m_image->planes().resize(1);
-                m_image->planes()[0] = m_buffers[m_nextBufferIndex].ptrs[0];
+                m_image->plane(0).init(m_buffers[m_nextBufferIndex].ptrs[0], m_format.fmt.pix.sizeimage);
                 break;
 
         case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
-                m_image->init(m_format.fmt.pix_mp.width, m_format.fmt.pix_mp.height, m_format.fmt.pix_mp.plane_fmt->bytesperline,
-                        m_format.fmt.pix_mp.plane_fmt->sizeimage, buffer->bytesused, m_format.fmt.pix_mp.pixelformat, 
+                m_image->init(m_format.fmt.pix_mp.width, m_format.fmt.pix_mp.height,
+                        m_format.fmt.pix_mp.pixelformat,
+                        m_format.fmt.pix_mp.plane_fmt->sizeimage, m_format.fmt.pix_mp.plane_fmt->bytesperline,
                         buffer->sequence, timestamp);
                 m_image->planes().resize(buffer->length);
                 for (unsigned int planeIndex = 0; planeIndex < buffer->length; planeIndex++) {
-                        m_image->planes()[planeIndex] = m_buffers[m_nextBufferIndex].ptrs[planeIndex];
+                        m_image->plane(planeIndex).init(
+                                m_buffers[m_nextBufferIndex].ptrs[planeIndex], 
+                                m_format.fmt.pix_mp.plane_fmt->sizeimage);
                 }
                 break;
         }
@@ -472,8 +476,8 @@ int V4L2ImageSource::setControl(std::string name, void *value, int size)
         struct v4l2_query_ext_ctrl queryctrl;
         queryctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
         while(0 == ioctl(m_subDeviceFd, VIDIOC_QUERY_EXT_CTRL, &queryctrl)) {
-                printf("Control (name: '%s', id: 0x%08x, type: %u, flags: 0x%08x)\n", 
-                        (const char *)queryctrl.name, queryctrl.id, queryctrl.type, queryctrl.flags);
+                // printf("Control (name: '%s', id: 0x%08x, type: %u, flags: 0x%08x)\n", 
+                //         (const char *)queryctrl.name, queryctrl.id, queryctrl.type, queryctrl.flags);
                 if (0 == name.compare((const char *)queryctrl.name)) {
                         // printf("Control (name: '%s', id: 0x%08x, type: %u, flags: 0x%08x, value: %u)\n", 
                         //         name.c_str(), queryctrl.id, queryctrl.type, queryctrl.flags, value);

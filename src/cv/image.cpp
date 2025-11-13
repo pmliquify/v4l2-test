@@ -4,25 +4,26 @@
 Image::Image() :
         m_width(0),
         m_height(0),
+        m_pixelformat(0),
+        m_size(0),
         m_bytesPerLine(0),
         m_bytesPerPixel(0),
-        m_imageSize(0),
-        m_bytesUsed(0),
-        m_pixelformat(0),
         m_sequence(0),
-        m_timestamp(0)
+        m_timestamp(0),
+        m_shift(0)
 {
 }
 
-void Image::init(unsigned short width, unsigned short height, unsigned short bytesPerLine, unsigned int imageSize,
-                unsigned int bytesUsed, unsigned int pixelformat, unsigned int sequence, unsigned long timestamp)
+void Image::init(unsigned short width, unsigned short height, 
+        unsigned int pixelformat, 
+        unsigned int size, unsigned short bytesPerLine,
+        unsigned int sequence, unsigned long timestamp)
 {
         m_width = width;
         m_height = height;
-        m_bytesPerLine = bytesPerLine;
-        m_imageSize = imageSize;
-        m_bytesUsed = bytesUsed;
         m_pixelformat = pixelformat;
+        m_size = size;
+        m_bytesPerLine = bytesPerLine;
         m_sequence = sequence;
         m_timestamp = timestamp;
 
@@ -50,7 +51,7 @@ void Image::init(unsigned short width, unsigned short height, unsigned short byt
 
 unsigned short Image::pixelValue(unsigned short x, unsigned short y) const
 {
-        const unsigned char *data = plane(0);
+        const unsigned char *data = plane(0).data();
         unsigned int index = y*m_bytesPerLine + x*m_bytesPerPixel;
         const unsigned char *pixel = data + index;
         unsigned short val16 = 0;

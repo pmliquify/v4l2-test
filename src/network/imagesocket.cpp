@@ -4,7 +4,6 @@
 #include <sys/socket.h>
 #include <netdb.h> 
 #include <memory.h>
-#include <iostream>
 
 
 // *** Socket *****************************************************************
@@ -74,16 +73,16 @@ void Socket::handleErrorForRecv(int err)
 
 struct ImageHeader
 {
-        unsigned short width;
-        unsigned short height;
-        unsigned short bytesPerLine;
-        unsigned int imageSize;
-        unsigned int bytesUsed;
-        unsigned int pixelformat;
-        unsigned int sequence;
-        unsigned long timestamp;
-        unsigned char  numPlanes;
-        unsigned short shift;
+        unsigned short  width;
+        unsigned short  height;
+        unsigned short  bytesPerLine;
+        unsigned int    imageSize;
+        unsigned int    bytesUsed;
+        unsigned int    pixelformat;
+        unsigned int    sequence;
+        unsigned long   timestamp;
+        unsigned char   numPlanes;
+        unsigned short  shift;
 };
 
 struct ControlHeader
@@ -162,13 +161,12 @@ int ImageSocketClient::sendImage(const Image *image)
         struct ImageHeader header;
         header.width = image->width();
         header.height = image->height();
-        header.bytesPerLine = image->bytesPerLine();
-        header.imageSize = image->imageSize();
-        header.bytesUsed = image->bytesUsed();
         header.pixelformat = image->pixelformat();
+        header.imageSize = image->size();
+        header.numPlanes = image->planes().size();
+        header.bytesPerLine = image->bytesPerLine();
         header.sequence = image->sequence();
         header.timestamp = image->timestamp();
-        header.numPlanes = image->planes().size();
         header.shift = image->shift();
 
         unsigned int sendSize = sizeof(header);
@@ -177,23 +175,30 @@ int ImageSocketClient::sendImage(const Image *image)
                 return -1;
         }
 
-        sendSize = (image->bytesUsed() > 0) ? image->bytesUsed() : image->imageSize();
-        const unsigned char * plane = image->plane(0);
-        int index = 0;
-        while (index < sendSize) {
-                const unsigned char *data = plane + index;
-                unsigned int remainingSize = sendSize - index;
-                size = send(m_socket, data, remainingSize);
+        for (int planeIx=0; planeIx<image->planes().size(); planeIx++) {
+                unsigned int planeSize = image->plane(planeIx).size();
+                ssize_t size = send(m_socket, (const char *)&planeSize, sizeof(planeSize));
                 if (size < 0) {
                         return -1;
                 }
-                index += size;
-        }
-        if (index == sendSize) {
-                return 0;
+
+                const unsigned char * plane = image->plane(planeIx).data();
+                int index = 0;
+                while (index < planeSize) {
+                        const unsigned char *data = plane + index;
+                        unsigned int remainingSize = planeSize - index;
+                        size = send(m_socket, data, remainingSize);
+                        if (size < 0) {
+                                return -1;
+                        }
+                        index += size;
+                }
+                if (index < planeSize) {
+                        return -1;
+                }
         }
 
-        return -1;
+        return 0;
 }
 
 
@@ -287,36 +292,34 @@ int ImageSocketServer::receiveImage(Image *image)
         ssize_t size = receive(m_client, (char *)&header, sizeof(header), MSG_WAITALL);
 
         if (size == sizeof(header)) {
-                if (image->imageSize() != header.imageSize) {
-                        if (image->imageSize() != 0) {
-                                for (int index=0; index<image->planes().size(); index++) {
-                                        free(image->planes().at(index));
-                                }
-                        }
-                        image->planes().resize(header.numPlanes);
-                        image->setImageSize(header.imageSize);
-                        for (int index=0; index<image->planes().size(); index++) {
-                                image->planes()[index] = (unsigned char *)malloc(image->imageSize());
-                        }
-                }
-
-                unsigned int receiveSize = (image->bytesUsed() > 0) ? image->bytesUsed() : image->imageSize();
-                unsigned char *plane = (unsigned char *)image->planes()[0];
-                int index = 0;
-                while (index < receiveSize) {
-                        unsigned char *data = plane + index;
-                        unsigned int remainingSize = receiveSize - index;
-                        size = receive(m_client, data, remainingSize, MSG_WAITALL);
-                        if (size <= 0) {
+                image->init(header.width, header.height, 
+                        header.pixelformat,
+                        header.imageSize, header.bytesPerLine,
+                        header.sequence, header.timestamp);
+                image->setShift(header.shift);
+                image->planes().resize(header.numPlanes);
+                for (int planeIx=0; planeIx<header.numPlanes; planeIx++) {
+                        unsigned int planeSize = 0;
+                        size = receive(m_client, (char *)&planeSize, sizeof(planeSize), MSG_WAITALL);
+                        if (size != sizeof(planeSize)) {
                                 close();
                                 return -1;
                         }
-                        index += size;
+                        image->plane(planeIx).init(planeSize);
+                        unsigned int receiveSize = planeSize;
+                        unsigned char *plane = (unsigned char *)image->plane(planeIx).data();
+                        int index = 0;
+                        while (index < receiveSize) {
+                                unsigned char *data = plane + index;
+                                unsigned int remainingSize = receiveSize - index;
+                                size = receive(m_client, data, remainingSize, MSG_WAITALL);
+                                if (size <= 0) {
+                                        close();
+                                        return -1;
+                                }
+                                index += size;
+                        }
                 }
-                                
-                image->init(header.width, header.height, header.bytesPerLine, header.imageSize,
-                        header.bytesUsed, header.pixelformat, header.sequence, header.timestamp);
-                image->setShift(header.shift);
 
                 return 0;
         }

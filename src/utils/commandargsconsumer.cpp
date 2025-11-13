@@ -9,5 +9,5 @@ void CommandArgsConsumer::printArgSection(std::string section)
 
 void CommandArgsConsumer::printArg(std::string key, std::string desciption)
 {
-        printf("  %-20s  %s\n", key.c_str(), desciption.c_str());
+        printf("  %-22s  %s\n", key.c_str(), desciption.c_str());
 }
