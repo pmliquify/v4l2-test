@@ -27,6 +27,9 @@ Mat convert(Image *image)
         case V4L2_PIX_FMT_SBGGR12: type = CV_16UC1; debayer = true;  divider = 4095; code =  COLOR_BayerBG2RGB; break;
         case V4L2_PIX_FMT_YUYV:    type =  CV_8UC2; debayer = true;  divider =    1; code = COLOR_YUV2BGR_YUY2; break;
         case V4L2_PIX_FMT_SRGGB10P: type = CV_16UC1; debayer = true;  divider = 1023; code =  COLOR_BayerRG2RGB; break;
+        case V4L2_PIX_FMT_SBGGR10P: type = CV_16UC1; debayer = true;  divider = 1023; code =  COLOR_BayerBG2RGB; break;
+        case V4L2_PIX_FMT_SGBRG10P: type = CV_16UC1; debayer = true;  divider = 1023; code =  COLOR_BayerGB2RGB; break;
+        case V4L2_PIX_FMT_SGRBG10P: type = CV_16UC1; debayer = true;  divider = 1023; code =  COLOR_BayerGR2RGB; break;
         }
 
         //Print the pixel format as string
@@ -51,12 +54,19 @@ Mat convert(Image *image)
         case V4L2_PIX_FMT_SRGGB10P: pixelformat = "SRGGB10P"; break;
         case V4L2_PIX_FMT_SBGGR10P: pixelformat = "SBGGR10P"; break;
         case V4L2_PIX_FMT_SGBRG10P: pixelformat = "SGBRG10P"; break;
+        case V4L2_PIX_FMT_SGRBG10P: pixelformat = "SGRBG10P"; break;
         default: pixelformat = "Unknown"; break;
         }
 
-        if(image->pixelformat() == V4L2_PIX_FMT_SRGGB10P || image->pixelformat() == V4L2_PIX_FMT_SBGGR10P || image->pixelformat() == V4L2_PIX_FMT_SGBRG10P)
-        {
-            return convert_bayer10p_to_rgb((uint8_t *)image->planes()[0], image->width(), image->height(),0);
+        if (image->pixelformat() == V4L2_PIX_FMT_SRGGB10P ||
+            image->pixelformat() == V4L2_PIX_FMT_SBGGR10P ||
+            image->pixelformat() == V4L2_PIX_FMT_SGBRG10P ||
+            image->pixelformat() == V4L2_PIX_FMT_SGRBG10P) {
+          int blackcols =
+              image->bytesPerLine() - (image->width() * image->bytesPerPixel());
+          return convert_bayer10p_to_rgb((uint8_t *)image->planes()[0],
+                                         image->width(), image->height(),
+                                         blackcols, code);
         }
 
         printf("pixelformat: %s (%d)\n", pixelformat.c_str(), image->pixelformat());
@@ -87,7 +97,7 @@ Mat convert(Image *image)
         return imageResult;
 }
 
-cv::Mat convert_bayer10p_to_rgb(const uint8_t *data, int width, int height, int blackcols)
+cv::Mat convert_bayer10p_to_rgb(const uint8_t *data, int width, int height, int blackcols, int code)
 {
     // Create a 16-bit Mat from the 10-bit data
     cv::Mat rgb;
@@ -109,7 +119,7 @@ cv::Mat convert_bayer10p_to_rgb(const uint8_t *data, int width, int height, int 
 
         }
     }
-    cv::cvtColor(raw, rgb, cv::COLOR_BayerBG2BGR);
+    cv::cvtColor(raw, rgb, code);
 
     // Convert the Bayer image to RGB
 

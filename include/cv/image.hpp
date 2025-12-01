@@ -25,6 +25,7 @@ public:
         u_int64_t timestamp() const { return m_timestamp; }
         u_int16_t shift() const { return m_shift; }
         void setShift(u_int16_t shift) { m_shift = shift; }
+        double bytesPerPixel() { return m_bytesPerPixel; }
 
         typedef std::vector<u_int8_t *> Planes;
         const Planes &planes() const { return m_planes; }
