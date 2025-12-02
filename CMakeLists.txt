@@ -22,8 +22,10 @@ if (OPENCV_FOUND)
         include_directories(${OpenCV_INCLUDE_DIRS})
 endif()
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(GST REQUIRED gstreamer-1.0 gstreamer-app-1.0 gstreamer-video-1.0)
+find_package(PkgConfig)
+if (PkgConfig_FOUND)
+        pkg_check_modules(GST gstreamer-1.0 gstreamer-app-1.0 gstreamer-video-1.0)
+endif()
 
 # --- Librarys ----------------------------------------------------------------
 
@@ -66,11 +68,12 @@ if (GST_FOUND)
                 src/sources/nvargusimagesource.cpp)
         add_compile_definitions(WITH_GSTREAMER)
         target_include_directories(sources PUBLIC include PRIVATE ${GST_INCLUDE_DIRS})
-        target_link_libraries(sources PRIVATE cv utils ${GST_LIBRARIES})
+        target_link_libraries(sources PRIVATE ${GST_LIBRARIES})
 endif()
 if (OPENCV_FOUND)
-        target_link_libraries(sources PUBLIC ${OpenCV_LIBS})
+        target_link_libraries(sources PRIVATE ${OpenCV_LIBS})
 endif()
+target_link_libraries(sources PRIVATE cv utils)
 
 # Library gui
 add_library(gui
