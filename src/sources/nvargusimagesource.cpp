@@ -11,6 +11,10 @@ NvArgusImageSource::NvArgusImageSource() :
         m_sink(NULL),
         m_sensorId(0),
         m_aeLock(false),
+        m_aeLeft(0),
+        m_aeTop(0),
+        m_aeWidth(0),
+        m_aeHeight(0),
         m_gainRange(1),
         m_ispDigitalGainRange(1),
         m_awbLock(false),
@@ -40,6 +44,10 @@ void NvArgusImageSource::printArgs()
         printArgSection("NvArgus ImageSource");
         printArg("--sensorId", "Set sensor ID (default: 0)");
         printArg("--aeLock", "Enable Auto Exposure Lock (default: 0 = enabled)");
+        printArg("--aeLeft", "Set Auto Exposure Region Left (default: 0)");
+        printArg("--aeTop", "Set Auto Exposure Region Top (default: 0)");
+        printArg("--aeWidth", "Set Auto Exposure Region Width (default: 0 = full frame)");
+        printArg("--aeHeight", "Set Auto Exposure Region Height (default: 0 = full frame)");
         printArg("--gainRange", "Set Analog Gain Range (default: 1 = disabled)");
         printArg("--ispDigitalGainRange", "Set Digital Gain Range (default: 1 = disabled)");
         printArg("--awbLock", "Enable Auto White Balance Lock (default: 0 = enabled)");
@@ -54,6 +62,10 @@ int NvArgusImageSource::setup(CommandArgs &args)
 {
         m_sensorId = args.optionInt("--sensorId", 0);
         m_aeLock = args.optionInt("--aeLock", 0);
+        m_aeLeft = args.optionInt("--aeLeft", 0);
+        m_aeTop = args.optionInt("--aeTop", 0);
+        m_aeWidth = args.optionInt("--aeWidth", 0);
+        m_aeHeight = args.optionInt("--aeHeight", 0);
         m_gainRange = args.optionInt("--gainRange", 1);
         m_ispDigitalGainRange = args.optionInt("--ispDigitalGainRange", 1);
         m_awbLock = args.optionInt("--awbLock", 0);
@@ -72,11 +84,20 @@ int NvArgusImageSource::open(const std::string devicePath, const std::string sub
 {
         m_sequence = 0;
 
+        std::string aeRegion;
+        if (m_aeWidth > 0 && m_aeHeight > 0) {
+                aeRegion = std::to_string(m_aeLeft) + " " + 
+                        std::to_string(m_aeTop) + " " +
+                        std::to_string(m_aeLeft + m_aeWidth) + " " + 
+                        std::to_string(m_aeTop + m_aeHeight) + " 1";
+        }
+
         // nvarguscamerasrc (NVMM) -> nvvidconv (to system RAM) -> NV12 -> appsink
         // IMPORTANT: The caps "video/x-raw,format=NV12" AFTER nvvidconv ensures host memory.
         std::string pipeline_desc =
                 "nvarguscamerasrc sensor-id=" + std::to_string(m_sensorId) + 
                 " aelock=" + (m_aeLock ? "true" : "false") +
+                (aeRegion.empty() ? "" : " aeregion=\"" + aeRegion + "\"") +
                 " gainrange=\"1 " + std::to_string(m_gainRange) + "\"" +
                 " ispdigitalgainrange=\"1 " + std::to_string(m_ispDigitalGainRange) + "\"" +
                 " awblock=" + (m_awbLock ? "true" : "false") +

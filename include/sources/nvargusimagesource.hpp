@@ -31,6 +31,10 @@ private:
 
         int             m_sensorId;
         bool            m_aeLock;
+        int             m_aeLeft;
+        int             m_aeTop;
+        int             m_aeWidth;
+        int             m_aeHeight;
         int             m_gainRange;
         int             m_ispDigitalGainRange;
         bool            m_awbLock;
