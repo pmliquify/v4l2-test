@@ -58,7 +58,7 @@ private:
         int initBuffers(int count);
         void clearBuffers();
         int enqueueBuffer(int bufferIndex);
-        struct v4l2_buffer * dequeueBuffer(int bufferIndex);
+        struct v4l2_buffer * dequeueBuffer(unsigned int &bufferIndex);
         int waitForNextBuffer(int timeout);
 
         void handleErrorForOpen(const char *path, int err);

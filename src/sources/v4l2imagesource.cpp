@@ -289,9 +289,8 @@ int V4L2ImageSource::getNextImage(Image *&image, int timeout, bool lastImage)
                 while(ret == 0) {
                         ret = waitForNextBuffer(0);
                         if (ret == 0) {
-                                dequeueBuffer(m_nextBufferIndex);
+                                dequeueBuffer(m_nextBufferIndex);  // updates m_nextBufferIndex
                                 enqueueBuffer(m_nextBufferIndex);
-                                m_nextBufferIndex = (m_nextBufferIndex + 1) % m_bufferCount;
                         }
                 }
         } 
@@ -568,13 +567,10 @@ int V4L2ImageSource::enqueueBuffer(int bufferIndex)
                 handleErrorForIoctl(VIDIOC_QBUF, errno);
                 return -1;
         }
-        if (!(buffer->flags & (V4L2_BUF_FLAG_MAPPED | V4L2_BUF_FLAG_QUEUED))) {
-                return -1;
-        }
         return 0;
 }
 
-struct v4l2_buffer * V4L2ImageSource::dequeueBuffer(int bufferIndex)
+struct v4l2_buffer * V4L2ImageSource::dequeueBuffer(unsigned int &bufferIndex)
 {
         struct v4l2_buffer *buffer = &m_buffers[bufferIndex].buffer;
         buffer->flags = 0;
@@ -582,6 +578,9 @@ struct v4l2_buffer * V4L2ImageSource::dequeueBuffer(int bufferIndex)
                 handleErrorForIoctl(VIDIOC_DQBUF, errno);
                 return NULL;
         }
+        // Use the index the kernel actually gave back, not the one we assumed
+        bufferIndex = buffer->index;
+        buffer = &m_buffers[bufferIndex].buffer;
 	if(buffer->flags & V4L2_BUF_FLAG_QUEUED) {
                 return NULL;
 	}
