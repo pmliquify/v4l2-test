@@ -36,6 +36,7 @@ int ImageSaverRunner::processImage(ImageSource *imageSource, Image *image)
         if(m_firstRun)
         {
                 m_firstRun = false;
+                imageSaverSink.init(image->width(), image->height());
         }
         auto start = std::chrono::high_resolution_clock::now(); // Start time
 
@@ -45,8 +46,8 @@ int ImageSaverRunner::processImage(ImageSource *imageSource, Image *image)
         {
                 case V4L2_PIX_FMT_GREY:
                         img = cv::Mat(image->height(), image->width(), CV_8UC1, image->planes()[0]);
-                        cv::resize(img, img, cv::Size(image->width()/m_scaleFactor, image->height()/m_scaleFactor));
-                        cv::cvtColor(img, img, cv::COLOR_GRAY2BGR);
+                        if (m_scaleFactor != 1)
+                                cv::resize(img, img, cv::Size(image->width()/m_scaleFactor, image->height()/m_scaleFactor));
                         break;
                 case V4L2_PIX_FMT_Y10:
                         data = m_imageConvertCPU.convert10BitGreyToRGB888(image, m_scaleFactor);

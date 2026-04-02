@@ -16,6 +16,7 @@ configure_file (
 # --- Packages ----------------------------------------------------------------
 
 find_package(OpenMP)
+find_package(Threads REQUIRED)
 
 # OpenCV 4.5.0 or newer/greater
 find_package(OpenCV REQUIRED)
@@ -89,7 +90,7 @@ add_library(sinks
         src/sinks/imagesaversink.cpp
        )
 target_include_directories(sinks PUBLIC include  ${GSTREAMER_INCLUDE_DIRS} ${GSTREAMER_APP_INCLUDE_DIRS} )
-target_link_libraries(sinks PRIVATE cv utils ${GSTREAMER_APP_LIBRARIES} ${GSTREAMER_LIBRARIES})
+target_link_libraries(sinks PRIVATE cv utils Threads::Threads ${GSTREAMER_APP_LIBRARIES} ${GSTREAMER_LIBRARIES})
 if (OPENCV_FOUND)
         target_link_libraries(sinks PUBLIC ${OpenCV_LIBS})
 endif()
