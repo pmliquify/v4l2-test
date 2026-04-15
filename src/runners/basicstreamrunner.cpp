@@ -146,6 +146,7 @@ int BasicStreamRunner::run(ImageSource *imageSource)
                 if (imageSource->streamOn(3) == 0) {
                         int error = 0;
                         for (int index = 0; index < count && error == 0; index += step) {
+                                prepareNextImage(imageSource);
                                 Image *image = NULL;
                                 int ret = imageSource->getNextImage(image, m_timeout);
                                 if (ret == 0) {

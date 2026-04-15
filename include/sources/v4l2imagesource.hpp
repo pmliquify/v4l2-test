@@ -35,6 +35,7 @@ public:
         int setTriggerMode(int triggerMode);
         int setIOMode(int ioMode);
         int setFrameRate(int frameRate);
+        int setSingleTrigger();
         int setBinningMode(int binningMode);
         int setScalingMode(int scalingMode);
         int setScale(int scale);

@@ -26,6 +26,7 @@ public:
         virtual int setTriggerMode(int triggerMode) { return 0; }
         virtual int setIOMode(int ioMode) { return 0; }
         virtual int setFrameRate(int frameRate) { return 0; }
+        virtual int setSingleTrigger() { return 0; }
         virtual int setBinningMode(int binning) { return 0; }
         virtual int setScalingMode(int scalingMode) { return 0; }
         virtual int setScale(int scale) { return 0; }

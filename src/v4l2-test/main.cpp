@@ -10,6 +10,7 @@
 #include <runners/noisetestrunner.hpp>
 #include <runners/socketclientrunner.hpp>
 #include <runners/liveroitestrunner.hpp>
+#include <runners/singletriggertestrunner.hpp>
 
 
 bool printHelp(CommandArgs &args, ImageSourceRunnerMap &runnerMap, ImageSource *imageSource)
@@ -59,6 +60,7 @@ void createRunners(ImageSourceRunnerMap &runnerMap)
         runnerMap["noise"] = new NoiseTestRunner();
         runnerMap["client"] = new SocketClientRunner();
         runnerMap["liveroi"] = new LiveRoiTestRunner();
+        runnerMap["singletrigger"] = new SingleTriggerTestRunner();
 }
 
 void runRunner(CommandArgs &args, ImageSourceRunnerMap &runnerMap, ImageSource *imageSource)

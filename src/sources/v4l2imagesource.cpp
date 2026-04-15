@@ -417,6 +417,12 @@ int V4L2ImageSource::setFrameRate(int frameRate)
         return setControl("Frame Rate", &frameRate);
 }
 
+int V4L2ImageSource::setSingleTrigger()
+{
+        int value = 1;
+        return setControl("Single Trigger", &value);
+}
+
 int V4L2ImageSource::setBinningMode(int binningMode)
 {
         return setControl("Binning Mode", &binningMode);

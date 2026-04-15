@@ -104,7 +104,8 @@ add_library(runner
         src/runners/isprunner.cpp
         src/runners/noisetestrunner.cpp
         src/runners/socketclientrunner.cpp
-        src/runners/liveroitestrunner.cpp)
+        src/runners/liveroitestrunner.cpp
+        src/runners/singletriggertestrunner.cpp)
 target_include_directories(runner PUBLIC include)
 target_link_libraries(runner PRIVATE cv utils network gui sources)
 

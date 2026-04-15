@@ -15,6 +15,7 @@ public:
         virtual void printArgs();
         virtual int setup(CommandArgs &args);
         virtual int run(ImageSource *imageSource);
+        virtual void prepareNextImage(ImageSource *imageSource) {}
 
 protected:
         int           m_print;
