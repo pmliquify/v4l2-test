@@ -6,6 +6,7 @@
 #include <runners/isprunner.hpp>
 #include <runners/gstreamerRunner.hpp>
 #include <runners/imagesaverrunner.hpp>
+#include <runners/videoRunner.hpp>
 
 #include <runners/noisetestrunner.hpp>
 #include <runners/socketclientrunner.hpp>
@@ -56,6 +57,7 @@ void createRunners(ImageSourceRunnerMap &runnerMap)
         runnerMap["client"] = new SocketClientRunner();
         runnerMap["gstreamer"] = new GstreamerRunner();
         runnerMap["imagesaver"] = new ImageSaverRunner();
+        runnerMap["video"] = new VideoRunner();
 
 
 }

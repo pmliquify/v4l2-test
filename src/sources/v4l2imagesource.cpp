@@ -562,6 +562,7 @@ void V4L2ImageSource::clearBuffers()
 int V4L2ImageSource::enqueueBuffer(int bufferIndex)
 {
         struct v4l2_buffer *buffer = &m_buffers[bufferIndex].buffer;
+        buffer->index = bufferIndex;  // dequeueBuffer may have corrupted this when the kernel returned a different buffer index
         buffer->flags = 0;
 	if (-1 == ioctl(m_deviceFd, VIDIOC_QBUF, buffer)) {
                 handleErrorForIoctl(VIDIOC_QBUF, errno);

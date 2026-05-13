@@ -39,6 +39,7 @@ protected:
         bool          m_singleAcquisition;
         int           m_imageCount;
         int           m_timeout;
+        bool          m_lastImage;
 
         virtual int processImage(ImageSource *imageSource, Image *image);
 };

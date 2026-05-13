@@ -83,14 +83,26 @@ pkg_search_module(GSTREAMER_SDP REQUIRED IMPORTED_TARGET gstreamer-sdp-1.0>=1.4)
 pkg_search_module(GSTREAMER_APP REQUIRED IMPORTED_TARGET gstreamer-app-1.0>=1.4)
 pkg_search_module(GSTREAMER_VIDEO REQUIRED IMPORTED_TARGET gstreamer-video-1.0>=1.4)
 
+pkg_search_module(LIBAV_CODEC  REQUIRED libavcodec)
+pkg_search_module(LIBAV_FORMAT REQUIRED libavformat)
+pkg_search_module(LIBAV_UTIL   REQUIRED libavutil)
+pkg_search_module(LIBAV_SWS    REQUIRED libswscale)
+
 # Library sources
 add_library(sinks
         STATIC
         src/sinks/gstreamerSink.cpp
         src/sinks/imagesaversink.cpp
+        src/sinks/videoSink.cpp
        )
-target_include_directories(sinks PUBLIC include  ${GSTREAMER_INCLUDE_DIRS} ${GSTREAMER_APP_INCLUDE_DIRS} )
-target_link_libraries(sinks PRIVATE cv utils Threads::Threads ${GSTREAMER_APP_LIBRARIES} ${GSTREAMER_LIBRARIES})
+target_include_directories(sinks PUBLIC include
+        ${GSTREAMER_INCLUDE_DIRS} ${GSTREAMER_APP_INCLUDE_DIRS}
+        ${LIBAV_CODEC_INCLUDE_DIRS} ${LIBAV_FORMAT_INCLUDE_DIRS}
+        ${LIBAV_UTIL_INCLUDE_DIRS} ${LIBAV_SWS_INCLUDE_DIRS})
+target_link_libraries(sinks PRIVATE cv utils Threads::Threads
+        ${GSTREAMER_APP_LIBRARIES} ${GSTREAMER_LIBRARIES}
+        ${LIBAV_CODEC_LIBRARIES} ${LIBAV_FORMAT_LIBRARIES}
+        ${LIBAV_UTIL_LIBRARIES} ${LIBAV_SWS_LIBRARIES})
 if (OPENCV_FOUND)
         target_link_libraries(sinks PUBLIC ${OpenCV_LIBS})
 endif()
@@ -120,6 +132,7 @@ add_library(runner
         STATIC
         src/runners/basicstreamrunner.cpp
         src/runners/imagesaverrunner.cpp
+        src/runners/videoRunner.cpp
         src/runners/streamrunner.cpp
         src/runners/isprunner.cpp
         src/runners/noisetestrunner.cpp

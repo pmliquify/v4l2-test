@@ -27,6 +27,7 @@ int ImageSaverRunner::setup(CommandArgs &args)
 
         m_scaleFactor = args.optionInt("--downscale", 1);
         m_maxCount = args.optionInt("--count", 0);
+        m_lastImage = false;  // capture every frame in order; do not drain the queue
 
         return 0;
 }
@@ -157,7 +158,7 @@ int ImageSaverRunner::processImage(ImageSource *imageSource, Image *image)
                 free(data.data);        
         if(m_maxCount > 0  && (++counter == m_maxCount))
         {
-                std::exit(0);
+                return 1;
         }
         return 0;
      

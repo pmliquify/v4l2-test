@@ -8,6 +8,7 @@
 class ImageSourceRunner : public CommandArgsConsumer
 {
 public:
+        virtual ~ImageSourceRunner() = default;
         virtual int run(ImageSource *imageSource) = 0;
         virtual int closeRunner() = 0;
 };

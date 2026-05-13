@@ -17,7 +17,8 @@ BasicStreamRunner::BasicStreamRunner() :
         m_height(0),
         m_singleAcquisition(false),
         m_imageCount(-1),
-        m_timeout(1000000)
+        m_timeout(1000000),
+        m_lastImage(true)
 {
 }
 
@@ -60,6 +61,7 @@ int BasicStreamRunner::setup(CommandArgs &args)
         m_x                     = args.optionInt("-x", -1);
         m_y                     = args.optionInt("-y", -1);
         m_timeout               = args.optionInt("--timeout", 1000000);
+        m_lastImage             = true;
         return 0;
 }
 
@@ -148,7 +150,7 @@ int BasicStreamRunner::run(ImageSource *imageSource)
                                 
         
                                 Image *image = NULL;
-                                int ret = imageSource->getNextImage(image, m_timeout);
+                                int ret = imageSource->getNextImage(image, m_timeout, m_lastImage);
                                 if (ret == 0) {
                                         error = processImage(imageSource, image);
                                         imageSource->releaseImage(image);
