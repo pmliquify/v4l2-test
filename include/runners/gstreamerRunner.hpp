@@ -11,13 +11,12 @@ public:
 
         void printArgs();
         int setup(CommandArgs &args);
-
+        int run(ImageSource *imageSource) override;
 
 private:
         GstreamerSink m_gstreamerSink;
         ImageConvertCPU m_imageConvertCPU;
-        bool m_firstRun = true;
         int m_scaleFactor = 1;
-        
+
         virtual int processImage(ImageSource *imageSource, Image *image);
 };

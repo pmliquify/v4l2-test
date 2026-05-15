@@ -25,18 +25,20 @@ int GstreamerRunner::setup(CommandArgs &args)
         m_gstreamerSink.setup(args);
 
         m_scaleFactor = args.optionInt("--downscale", 1);
-
+        m_lastImage   = false; // consume every frame in order; do not drain the queue
 
         return 0;
 }
 
+int GstreamerRunner::run(ImageSource *imageSource)
+{
+        m_gstreamerSink.init(imageSource->width() / m_scaleFactor,
+                             imageSource->height() / m_scaleFactor);
+        return BasicStreamRunner::run(imageSource);
+}
+
 int GstreamerRunner::processImage(ImageSource *imageSource, Image *image)
 {
-        if(m_firstRun)
-        {
-                m_gstreamerSink.init(image->width()/m_scaleFactor, image->height()/m_scaleFactor);
-                m_firstRun = false;
-        }
         auto start = std::chrono::high_resolution_clock::now(); // Start time
 
         cv::Mat img;

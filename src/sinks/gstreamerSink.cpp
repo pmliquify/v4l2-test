@@ -2,14 +2,10 @@
 
 GstreamerSink::GstreamerSink()
 {
-    initGStreamer();
 }
 GstreamerSink::~GstreamerSink()
 {
-    if (m_appsrc) {
-        gst_element_set_state(GST_ELEMENT(m_appsrc), GST_STATE_NULL);
-        gst_object_unref(GST_ELEMENT(m_appsrc));
-    }
+    close();
 }
 void GstreamerSink::printArgs()
 {
@@ -93,28 +89,28 @@ int GstreamerSink::initUdp(GstElement *link)
     GstElement *h264pay = gst_element_factory_make("rtph264pay", "pay0");
     GstElement *udpsink = gst_element_factory_make("udpsink", "udpsink0");
 
-    // Configure queue elements for better buffering
+    // Configure queue elements — bounded to prevent memory accumulation
     g_object_set(G_OBJECT(queue1),
-                "max-size-buffers", 0,
-                "max-size-bytes", 0,
-                "max-size-time", 0,
-                "leaky", 2, // downstream
+                "max-size-buffers", 2,
+                "max-size-bytes", (guint)0,
+                "max-size-time", (guint64)0,
+                "leaky", 2, // drop oldest when full
                 NULL);
 
     g_object_set(G_OBJECT(queue2),
-                "max-size-buffers", 0,
-                "max-size-bytes", 0,
-                "max-size-time", 0,
-                "leaky", 2, // downstream
+                "max-size-buffers", 2,
+                "max-size-bytes", (guint)0,
+                "max-size-time", (guint64)0,
+                "leaky", 2, // drop oldest when full
                 NULL);
 
-    // Configure x264enc for low-latency streaming
     g_object_set(G_OBJECT(x264enc),
-                "tune", 4,           // zero-latency
-                "speed-preset", 1,   // ultrafast
-                "bitrate", 2000,     // 2Mbps
-                "key-int-max", 30,   // Keyframe every 30 frames
-                "threads", 4,        // Use 4 threads for encoding
+                "tune",         4,       // zerolatency
+                "speed-preset", 1,       // ultrafast
+                "bitrate",      4000,    // 4 Mbps in kbps
+                "key-int-max",  30,
+                "threads",      4,
+                "byte-stream",  TRUE,    // Annex-B format for RTP
                 NULL);
 
     // Configure RTP payloader
@@ -156,19 +152,19 @@ int GstreamerSink::initUdpRK(GstElement *link)
     GstElement *h264pay = gst_element_factory_make("rtph264pay", "pay0");
     GstElement *udpsink = gst_element_factory_make("udpsink", "udpsink0");
 
-    // Configure queue elements for better buffering
+    // Configure queue elements — bounded to prevent memory accumulation
     g_object_set(G_OBJECT(queue1),
-                "max-size-buffers", 0,
-                "max-size-bytes", 0,
-                "max-size-time", 0,
-                "leaky", 2, // downstream
+                "max-size-buffers", 2,
+                "max-size-bytes", (guint)0,
+                "max-size-time", (guint64)0,
+                "leaky", 2, // drop oldest when full
                 NULL);
 
     g_object_set(G_OBJECT(queue2),
-                "max-size-buffers", 0,
-                "max-size-bytes", 0,
-                "max-size-time", 0,
-                "leaky", 2, // downstream
+                "max-size-buffers", 2,
+                "max-size-bytes", (guint)0,
+                "max-size-time", (guint64)0,
+                "leaky", 2, // drop oldest when full
                 NULL);
 
     // Configure mpph264enc for low-latency streaming
@@ -212,25 +208,27 @@ int GstreamerSink::initUdpRK(GstElement *link)
 }
 int GstreamerSink::initMp4(GstElement *link)
 {
-   
-    GstElement *mpph264enc = gst_element_factory_make("mpph264enc", "vc_mpph264enc");
-    g_object_set(G_OBJECT(mpph264enc), "bitrate", 10000 , NULL);
-    g_object_set(G_OBJECT(mpph264enc), "speed-preset", 3, NULL);
-        g_object_set(G_OBJECT(mpph264enc), "tune", 4, NULL);
- //     "! mp4mux ! "
-    //     "filesink location=test.mp4";
-    GstElement *mp4mux = gst_element_factory_make("mp4mux", "vc_rtph264pay");
-
+    GstElement *x264enc  = gst_element_factory_make("x264enc",  "vc_x264enc");
+    GstElement *mp4mux   = gst_element_factory_make("mp4mux",   "vc_mp4mux");
     GstElement *filesink = gst_element_factory_make("filesink", "vc_sink");
+
+    if (!x264enc || !mp4mux || !filesink) {
+        fprintf(stderr, "initMp4: failed to create one or more elements\n");
+        return -1;
+    }
+
+    g_object_set(G_OBJECT(x264enc),
+                 "bitrate",      10000,
+                 "speed-preset", 3,
+                 NULL);
     g_object_set(G_OBJECT(filesink), "location", m_filename.c_str(), NULL);
 
-    gst_bin_add_many(GST_BIN(m_pipeline), mpph264enc, mp4mux ,filesink, NULL);
+    gst_bin_add_many(GST_BIN(m_pipeline), x264enc, mp4mux, filesink, NULL);
 
-    gst_element_link(link, mpph264enc);
-    gst_element_link(mpph264enc, mp4mux);
-    gst_element_link(mp4mux, filesink);
-
-
+    if (!gst_element_link_many(link, x264enc, mp4mux, filesink, NULL)) {
+        fprintf(stderr, "initMp4: failed to link elements\n");
+        return -1;
+    }
 
     return 0;
 }
@@ -307,6 +305,8 @@ int GstreamerSink::initFbdev(GstElement *link)
 }
 int GstreamerSink::init(int width, int height)
 {
+    initGStreamer();
+
     this->m_width = width;
     this->m_height = height;
     std::cout << "GstreamerSink init" << std::endl;
@@ -326,8 +326,8 @@ int GstreamerSink::init(int width, int height)
                  "stream-type", 0, // GST_APP_STREAM_TYPE_STREAM
                  "format", GST_FORMAT_TIME, // timestamps in nano seconds
                  "is-live", TRUE,
-                 "block", TRUE,
-                 "max-bytes", 100000000,          // Set max-bytes to 10MB
+                 "block", FALSE,
+                 "max-bytes", (guint64)0,         // unlimited; flow control is in pusherThread
                  "blocksize", width * height * 3, // Set blocksize to image size
                  nullptr);
 
@@ -337,15 +337,25 @@ int GstreamerSink::init(int width, int height)
     bus_watch_id = gst_bus_add_watch(bus, GstreamerSink::bus_call, loop);
     gst_object_unref(bus);
 
-    gst_bin_add_many(GST_BIN(m_pipeline), GST_ELEMENT(m_appsrc), videoconvert, NULL);
-    GstCaps *capsappsrc2VideoConvert; // between appsrc and jpegenc
+    // queue0 decouples the pusher thread from downstream processing:
+    // appsrc → queue0 (thread boundary) → videoconvert → ...
+    // Without queue0, videoconvert runs synchronously in the pusher thread.
+    GstElement *queue0 = gst_element_factory_make("queue", "input_queue");
+    g_object_set(G_OBJECT(queue0),
+                 "max-size-buffers", 2,
+                 "max-size-bytes",   (guint)0,
+                 "max-size-time",    (guint64)0,
+                 "leaky",            2,  // drop oldest when full
+                 NULL);
+
+    gst_bin_add_many(GST_BIN(m_pipeline), GST_ELEMENT(m_appsrc), queue0, videoconvert, NULL);
+    GstCaps *capsappsrc2VideoConvert;
     capsappsrc2VideoConvert = gst_caps_new_simple("video/x-raw", "format",
                                                   G_TYPE_STRING, "BGR", "width", G_TYPE_INT, m_width, "height",
                                                   G_TYPE_INT, m_height, "framerate", GST_TYPE_FRACTION, 0, 1, NULL);
 
-
-    // link elements into pipe: appsrc -> jpegenc -> appsink
-    gst_element_link_filtered(GST_ELEMENT(m_appsrc), videoconvert, capsappsrc2VideoConvert);
+    gst_element_link_filtered(GST_ELEMENT(m_appsrc), queue0, capsappsrc2VideoConvert);
+    gst_element_link(queue0, videoconvert);
 
 
      switch (m_sink)
@@ -382,18 +392,37 @@ int GstreamerSink::init(int width, int height)
 
     // Start playing the pipeline
     gst_element_set_state(GST_ELEMENT(m_pipeline), GST_STATE_PLAYING);
+
+    m_stop   = false;
+    m_pusher = std::thread(&GstreamerSink::pusherThread, this);
+
     return 1;
 }
 void GstreamerSink::close()
 {
+    {
+        std::unique_lock<std::mutex> lock(m_mutex);
+        m_stop = true;
+    }
+    m_cv.notify_one();
+    if (m_pusher.joinable())
+        m_pusher.join();
+
     if (m_pipeline)
     {
-        // Set the pipeline state to NULL to finalize the file
+        if (m_appsrc && m_sink == SinkType::FILE) {
+            gst_app_src_end_of_stream(m_appsrc);
+            GstBus *ebus = gst_pipeline_get_bus(GST_PIPELINE(m_pipeline));
+            GstMessage *msg = gst_bus_timed_pop_filtered(ebus, 30 * GST_SECOND,
+                (GstMessageType)(GST_MESSAGE_EOS | GST_MESSAGE_ERROR));
+            if (msg) gst_message_unref(msg);
+            gst_object_unref(ebus);
+        }
+
         gst_element_set_state(GST_ELEMENT(m_pipeline), GST_STATE_NULL);
-        // Unref the pipeline to clean up
         gst_object_unref(m_pipeline);
         m_pipeline = nullptr;
-        m_appsrc = nullptr;
+        m_appsrc   = nullptr;
     }
 }
 
@@ -403,55 +432,59 @@ void GstreamerSink::initGStreamer()
     if (!initialized)
     {
         gst_init(nullptr, nullptr);
+        gst_debug_set_active(FALSE);
         initialized = true;
     }
 }
 
 int GstreamerSink::pushFrame(cv::Mat &frame)
 {
-    GstFlowReturn ret;
-
-    int size = frame.total() * frame.elemSize();
-    buffer = gst_buffer_new_allocate(NULL, size, NULL);
-    GstMapInfo map;
-    gst_buffer_map(buffer, &map, GST_MAP_WRITE);
-    memmove(map.data, frame.data, size);
-    gst_buffer_unmap(buffer, &map);
-
-    if(m_sink == SinkType::FILE)
+    cv::Mat cloned = frame.clone();
     {
-        // Set timestamp and duration
-        GST_BUFFER_PTS(buffer) = gst_util_uint64_scale(gst_clock_get_time(gst_pipeline_get_clock(GST_PIPELINE(m_pipeline))), GST_SECOND, GST_SECOND);
-        GST_BUFFER_DURATION(buffer) = gst_util_uint64_scale(1, GST_SECOND, 10); // Assuming 10 FPS
+        std::unique_lock<std::mutex> lock(m_mutex);
+        if (m_frameQueue.size() >= 2)
+            m_frameQueue.pop(); // drop oldest to keep queue bounded
+        m_frameQueue.push(std::move(cloned));
     }
-    else if (m_sink == SinkType::UDP || m_sink == SinkType::UDP_RK)
-    {
-        // Set timestamp and duration
-        GST_BUFFER_PTS(buffer) = gst_util_uint64_scale(gst_clock_get_time(gst_pipeline_get_clock(GST_PIPELINE(m_pipeline))), GST_SECOND, GST_SECOND);
-        GST_BUFFER_DURATION(buffer) = gst_util_uint64_scale(1, GST_SECOND, 10); // Assuming 10 FPS
-    }
-    else if (m_sink == SinkType::FBDEV)
-    {
-        // Set timestamp and duration
-        GST_BUFFER_PTS(buffer) = gst_util_uint64_scale(gst_clock_get_time(gst_pipeline_get_clock(GST_PIPELINE(m_pipeline))), GST_SECOND, GST_SECOND);
-        GST_BUFFER_DURATION(buffer) = gst_util_uint64_scale(1, GST_SECOND, 10); // Assuming 10 FPS
-    }
-   
-
-    
-    // Push the buffer to appsrc
-
-    // Ensure the buffer is pushed to the framebuffer
-    ret = gst_app_src_push_buffer(m_appsrc, buffer);
-    // Free the buffer
-
-    if (ret != GST_FLOW_OK)
-    {
-        std::cerr << "Error pushing buffer to GStreamer pipeline" << std::endl;
-        return -1;
-    }
-
+    m_cv.notify_one();
     return 0;
+}
+
+void GstreamerSink::pusherThread()
+{
+    while (true) {
+        cv::Mat frame;
+        {
+            std::unique_lock<std::mutex> lock(m_mutex);
+            m_cv.wait(lock, [this] { return !m_frameQueue.empty() || m_stop; });
+            if (m_frameQueue.empty())
+                break;
+            frame = std::move(m_frameQueue.front());
+            m_frameQueue.pop();
+        }
+
+        int size = frame.total() * frame.elemSize();
+        GstBuffer *buf = gst_buffer_new_allocate(NULL, size, NULL);
+        GstMapInfo map;
+        gst_buffer_map(buf, &map, GST_MAP_WRITE);
+        memcpy(map.data, frame.data, size);
+        gst_buffer_unmap(buf, &map);
+
+        GstClock *clk = gst_element_get_clock(GST_ELEMENT(m_pipeline));
+        if (clk) {
+            GstClockTime abs  = gst_clock_get_time(clk);
+            GstClockTime base = gst_element_get_base_time(GST_ELEMENT(m_pipeline));
+            GST_BUFFER_PTS(buf) = (abs > base) ? (abs - base) : 0;
+            gst_object_unref(clk);
+        } else {
+            GST_BUFFER_PTS(buf) = GST_CLOCK_TIME_NONE;
+        }
+        GST_BUFFER_DURATION(buf) = GST_CLOCK_TIME_NONE;
+
+        GstFlowReturn ret = gst_app_src_push_buffer(m_appsrc, buf);
+        if (ret != GST_FLOW_OK)
+            std::cerr << "Error pushing buffer to GStreamer pipeline" << std::endl;
+    }
 }
 
 void GstreamerSink::cb_need_data(GstElement *appsrc, guint unused_size, gpointer user_data)
@@ -462,15 +495,7 @@ void GstreamerSink::cb_need_data(GstElement *appsrc, guint unused_size, gpointer
 
 void GstreamerSink::cb_enough_data(GstElement *appsrc, gpointer user_data)
 {
-    GstreamerSink *sink = static_cast<GstreamerSink *>(user_data);
-    std::cout << "Enough data signal received" << std::endl;
-    fflush(stdout);
-    if(sink->m_sink == SinkType::FILE)
-    {
-    sink->finishFile();
-    std::exit(0);
-
-    }
+    // No action needed; back-pressure is handled by the bounded frameQueue.
 }
 void GstreamerSink::finishFile()
 {

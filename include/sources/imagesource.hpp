@@ -13,6 +13,9 @@ public:
         virtual int setFormat(int pixelFormat = 0) { return 0; }
         virtual int setSelection(int left, int top, int width, int height) { return 0; }
         
+        virtual int width() { return 0; }
+        virtual int height() { return 0; }
+
         virtual int streamOn(int bufferCount = 3) { return 0; }
         virtual int streamOff() { return 0; }
         virtual int getNextImage(Image *&image, int timeout, bool lastImage = true) { return 0; }

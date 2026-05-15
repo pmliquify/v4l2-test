@@ -16,7 +16,7 @@
 
 FrameBuffer::FrameBuffer() : m_fd(0),
                              m_ptr(NULL),
-                             m_console_fd(0)
+                             m_console_fd(-1)
 {
 }
 

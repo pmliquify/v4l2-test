@@ -25,7 +25,7 @@ BasicStreamRunner::BasicStreamRunner() :
 BasicStreamRunner::~BasicStreamRunner()
 {
 
-        fflush(stdout);
+        // fflush(stdout);
         m_running = false;
 }
 

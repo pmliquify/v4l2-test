@@ -4,6 +4,10 @@
 #include <gst/gst.h>
 #include <opencv2/opencv.hpp>
 #include <utils/commandargsconsumer.hpp>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <queue>
 
 class GstreamerSink: CommandArgsConsumer
 {
@@ -42,17 +46,22 @@ public:
 private:
     GstPipeline *m_pipeline;
     GstAppSrc *m_appsrc = nullptr;
-    GstBuffer *buffer;
     GMainLoop *loop;
     GstBus *bus;
     guint bus_watch_id;
 
+    std::thread             m_pusher;
+    std::mutex              m_mutex;
+    std::condition_variable m_cv;
+    std::queue<cv::Mat>     m_frameQueue;
+    bool                    m_stop = false;
+
+    void pusherThread();
 
     static gboolean bus_call(GstBus *bus, GstMessage *msg, gpointer data);
 
     static void cb_enough_data(GstElement *appsrc, gpointer user_data);
     static void cb_need_data(GstElement *appsrc, guint unused_size, gpointer user_data);
-    cv::Mat bufferImage;
 
     int m_width, m_height;
     std::string m_udpHost;

@@ -133,6 +133,24 @@ int V4L2ImageSource::close()
         return 0;
 }
 
+int V4L2ImageSource::width()
+{
+        switch (m_format.type) {
+        case V4L2_BUF_TYPE_VIDEO_CAPTURE:        return (int)m_format.fmt.pix.width;
+        case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE: return (int)m_format.fmt.pix_mp.width;
+        default:                                 return 0;
+        }
+}
+
+int V4L2ImageSource::height()
+{
+        switch (m_format.type) {
+        case V4L2_BUF_TYPE_VIDEO_CAPTURE:        return (int)m_format.fmt.pix.height;
+        case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE: return (int)m_format.fmt.pix_mp.height;
+        default:                                 return 0;
+        }
+}
+
 int V4L2ImageSource::getFormat()
 {
         memset(&m_format, 0, sizeof(m_format));
@@ -579,12 +597,15 @@ struct v4l2_buffer * V4L2ImageSource::dequeueBuffer(unsigned int &bufferIndex)
                 handleErrorForIoctl(VIDIOC_DQBUF, errno);
                 return NULL;
         }
-        // Use the index the kernel actually gave back, not the one we assumed
+        // Use the index the kernel actually gave back, not the one we assumed.
+        // Do NOT re-read from m_buffers[buffer->index] — that slot was not updated
+        // by this DQBUF call and may still carry stale V4L2_BUF_FLAG_QUEUED from
+        // the last enqueueBuffer, causing a false-positive NULL return and permanent
+        // buffer loss (starvation after 3 losses with 3-buffer pool).
         bufferIndex = buffer->index;
-        buffer = &m_buffers[bufferIndex].buffer;
-	if(buffer->flags & V4L2_BUF_FLAG_QUEUED) {
+        if (buffer->flags & V4L2_BUF_FLAG_QUEUED) {
                 return NULL;
-	}
+        }
         return buffer;
 }
 

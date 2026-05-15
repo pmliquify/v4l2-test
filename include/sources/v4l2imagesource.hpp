@@ -17,6 +17,8 @@ public:
 
         int open(const std::string devicePath, const std::string subDevicePath);
         int close();
+        int width() override;
+        int height() override;
         int getFormat();
         int setFormat(int pixelFormat = 0);
         int printFormat();
