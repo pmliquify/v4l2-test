@@ -41,7 +41,7 @@ public:
 
 private:
     GstPipeline *m_pipeline;
-    GstAppSrc *m_appsrc;
+    GstAppSrc *m_appsrc = nullptr;
     GstBuffer *buffer;
     GMainLoop *loop;
     GstBus *bus;

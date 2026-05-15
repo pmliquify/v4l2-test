@@ -24,7 +24,7 @@ BasicStreamRunner::BasicStreamRunner() :
 
 BasicStreamRunner::~BasicStreamRunner()
 {
-        printf("BasicStreamRunner::~BasicStreamRunner()\n");
+
         fflush(stdout);
         m_running = false;
 }

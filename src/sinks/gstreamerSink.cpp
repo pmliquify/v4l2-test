@@ -6,8 +6,10 @@ GstreamerSink::GstreamerSink()
 }
 GstreamerSink::~GstreamerSink()
 {
-    gst_element_set_state(GST_ELEMENT(m_appsrc), GST_STATE_NULL);
-    gst_object_unref(GST_ELEMENT(m_appsrc));
+    if (m_appsrc) {
+        gst_element_set_state(GST_ELEMENT(m_appsrc), GST_STATE_NULL);
+        gst_object_unref(GST_ELEMENT(m_appsrc));
+    }
 }
 void GstreamerSink::printArgs()
 {
