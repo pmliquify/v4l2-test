@@ -1,3 +1,8 @@
+/*
+ * SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 Peter Martienssen
+ */
+
 #include "convert.hpp"
 #include <linux/videodev2.h>
 
@@ -30,10 +35,13 @@ Mat convert(Image *image)
 
         Mat imageRAW8(image->height(), image->width(), type, Scalar(200, 0, 0));
         int imageSize = image->bytesPerLine() * image->height();
-        if (image->imageSize() < imageSize) {
-                imageSize = image->imageSize();
+        if (image->plane(0).size() < static_cast<unsigned int>(imageSize)) {
+                imageSize = image->plane(0).size();
         }
-        memcpy(imageRAW8.data, (char *)image->planes()[0], imageSize);
+        const unsigned char *source = image->plane(0).data();
+        if (source != nullptr && imageSize > 0) {
+                memcpy(imageRAW8.data, source, imageSize);
+        }
 
         if (divider > 1) {
                 imageRAW8.convertTo(imageRAW8, CV_8UC1, 255.0/divider/(1 << image->shift()));

@@ -1,3 +1,8 @@
+/*
+ * SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 Peter Martienssen
+ */
+
 #include "draw.hpp"
 
 
@@ -15,14 +20,15 @@ void drawImageInfo(Mat img, Image *image, int x, int y)
         infoText.draw(img);
 
         int imageSize = image->bytesPerLine() * image->height();
-        if (imageSize != image->imageSize()) {
+        unsigned int planeSize = image->plane(0).size();
+        if ((unsigned int)imageSize != planeSize) {
                 char error[100];
                 char format[] = "ERROR: Image data size is %s as expected (%u %s %u bytes)";
-                if (image->imageSize() < imageSize) {
-                        sprintf(error, format, "smaler", image->imageSize(), "<", imageSize);
+                if (planeSize < (unsigned int)imageSize) {
+                        sprintf(error, format, "smaler", planeSize, "<", imageSize);
 
-                } if (image->imageSize() > imageSize) {
-                        sprintf(error, format, "bigger", image->imageSize(), ">", imageSize);
+                } else if (planeSize > (unsigned int)imageSize) {
+                        sprintf(error, format, "bigger", planeSize, ">", imageSize);
                 }
                 Text errorText(x, y + 1);
                 errorText.setText(error);
