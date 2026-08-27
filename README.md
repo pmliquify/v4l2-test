@@ -1,5 +1,9 @@
 # V4L2 testing application
 
+> **Deprecated:** This project is outdated and is no longer actively maintained.
+
+`v4l2-test` is a Linux command-line application for testing and inspecting video devices through the Video4Linux2 (V4L2) API. It can stream raw image data, display pixel values, show frames on a framebuffer, and support camera control parameters such as exposure and gain. The project was developed primarily for embedded camera platforms and cross-compilation to ARM64.
+
 ## Version 0.4.0
 
 ## Build
