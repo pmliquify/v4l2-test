@@ -1,3 +1,8 @@
+/*
+ * SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 Peter Martienssen
+ */
+
 #include <gui/viewer.hpp>
 #include <opencv2/opencv.hpp>
 #include "convert.hpp"

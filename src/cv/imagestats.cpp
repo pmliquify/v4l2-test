@@ -1,3 +1,8 @@
+/*
+ * SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 Peter Martienssen
+ */
+
 #include <cv/imagestats.hpp>
 #include <math.h>
 // #include <opencv2/opencv.hpp>

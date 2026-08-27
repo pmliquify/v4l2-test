@@ -1,3 +1,8 @@
+/*
+ * SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 Peter Martienssen
+ */
+
 #include <network/imagesocket.hpp>
 #include <utils/errno.hpp>
 #include <arpa/inet.h>

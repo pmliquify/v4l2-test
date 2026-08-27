@@ -1,3 +1,8 @@
+/*
+ * SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 Peter Martienssen
+ */
+
 #include <runners/isprunner.hpp>
 #include <linux/videodev2.h>
 // #include <opencv2/opencv.hpp>

@@ -1,3 +1,8 @@
+/*
+ * SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 Peter Martienssen
+ */
+
 #include "mainwindow.hpp"
 
 #define CTL_EXPOSURE     "Exposure"

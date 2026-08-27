@@ -1,3 +1,8 @@
+/*
+ * SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 Peter Martienssen
+ */
+
 #include <runners/basicstreamrunner.hpp>
 #include <cv/imageprint.hpp>
 #include <unistd.h>

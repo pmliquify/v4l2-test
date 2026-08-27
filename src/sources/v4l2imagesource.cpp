@@ -1,3 +1,8 @@
+/*
+ * SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 Peter Martienssen
+ */
+
 #include <sources/v4l2imagesource.hpp>
 #include <utils/errno.hpp>
 #include <iostream>

@@ -1,3 +1,8 @@
+/*
+ * SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 Peter Martienssen
+ */
+
 #include "ccmwindow.hpp"
 #ifdef WITH_CCM
 #include <opencv2/mcc.hpp>

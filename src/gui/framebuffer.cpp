@@ -1,3 +1,8 @@
+/*
+ * SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 Peter Martienssen
+ */
+
 #include <gui/framebuffer.hpp>
 #include <utils/errno.hpp>
 #include <iostream>

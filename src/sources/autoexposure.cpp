@@ -1,3 +1,8 @@
+/*
+ * SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 Peter Martienssen
+ */
+
 #include <sources/autoexposure.hpp>
 #include <cv/imagestats.hpp>
 #include <time.h>

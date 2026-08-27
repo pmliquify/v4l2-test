@@ -1,3 +1,8 @@
+/*
+ * SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 Peter Martienssen
+ */
+
 #include <utils/errno.hpp>
 #include <iostream>
 #include <linux/videodev2.h>

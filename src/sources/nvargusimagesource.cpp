@@ -1,3 +1,8 @@
+/*
+ * SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 Peter Martienssen
+ */
+
 #include <sources/nvargusimagesource.hpp>
 #include <gst/gst.h>
 #include <gst/app/gstappsink.h>
